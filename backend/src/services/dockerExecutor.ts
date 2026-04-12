@@ -47,7 +47,7 @@ export class DockerExecutor {
         -v "${codeFile}:/code.ts:ro" \
         -v "${inputFile}:/input.txt:ro" \
         ${this.imageName} \
-        sh -c "tsx /code.ts < /input.txt"`;
+        sh -c "esbuild /code.ts --platform=node --target=node18 --format=cjs --log-level=error --outfile=/tmp/code.js && node /tmp/code.js < /input.txt"`;
 
       try {
         const { stdout, stderr } = await execPromise(dockerCommand, {

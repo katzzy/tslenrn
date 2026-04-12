@@ -15,8 +15,8 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --chown=nodejs:nodejs package*.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
-# Install TypeScript runtime tools for running user code
-RUN npm install -g typescript ts-node tsx
+# Install minimal execution tools: compile TS with esbuild, run JS with node
+RUN npm install -g esbuild
 
 USER nodejs
 
