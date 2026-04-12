@@ -26,7 +26,6 @@ interface DesktopWorkspaceProps {
   canGoNext: boolean;
   code: string;
   onCodeChange: (value: string) => void;
-  selectedProblemIdForEditor: number;
   themeMode: ThemeMode;
   onRun: () => void;
   onTest: () => void;
@@ -55,7 +54,6 @@ const DesktopWorkspace = ({
   canGoNext,
   code,
   onCodeChange,
-  selectedProblemIdForEditor,
   themeMode,
   onRun,
   onTest,
@@ -70,7 +68,7 @@ const DesktopWorkspace = ({
 }: DesktopWorkspaceProps) => (
   <div
     ref={layoutRef}
-    className="hidden min-h-0 flex-1 gap-3 overflow-hidden bg-slate-50/20 p-2.5 dark:bg-gray-900/10 lg:flex"
+    className="min-h-0 flex flex-1 gap-3 overflow-hidden bg-slate-50/20 p-2.5 dark:bg-gray-900/10"
   >
     <aside className="ios-panel flex min-h-0 w-[360px] min-w-[320px] flex-col overflow-hidden">
       <div className="p-4 pb-3">
@@ -117,7 +115,7 @@ const DesktopWorkspace = ({
       style={{ flexBasis: `${editorPaneRatio * 100}%` }}
       code={code}
       onCodeChange={onCodeChange}
-      editorPath={`problem-${selectedProblemIdForEditor}.ts`}
+      editorPath={`problem-${selectedProblemId}.ts`}
       themeMode={themeMode}
       showActions
       onRun={onRun}

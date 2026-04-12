@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import DesktopNavBar from './components/workspace/DesktopNavBar';
 import DesktopWorkspace from './components/workspace/DesktopWorkspace';
 import MobileHeader from './components/workspace/MobileHeader';
@@ -11,6 +12,10 @@ import { useWorkspaceUIState } from './hooks/useWorkspaceUIState';
 
 function App() {
   const { themeMode, toggleTheme } = useThemeMode();
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 1024px)').matches;
+  });
   const ui = useWorkspaceUIState();
   const { layoutRef, editorPaneRatio, onResizeStart } = useSplitPane();
   const {
@@ -22,7 +27,7 @@ function App() {
     listError,
     selectedProblemError,
   } = useProblems();
-  const { code, setCode, resetToStarterCode } = useCodeDraft({
+  const { code, setCode, resetToStarterCode, storageError } = useCodeDraft({
     selectedProblemId,
     starterCode: selectedProblem?.starterCode,
   });
@@ -74,6 +79,18 @@ function App() {
     handleSelectProblem(nextProblemId);
   };
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsDesktop(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
   if (isBootstrapping) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-100/60 dark:bg-gray-950">
@@ -105,86 +122,95 @@ function App() {
   return (
     <div className="flex h-screen flex-col gap-3 bg-slate-100 p-3 dark:bg-gray-950 lg:flex-row">
       <div className="ios-surface min-h-0 flex flex-1 flex-col overflow-hidden">
-        <DesktopNavBar
-          selectedProblemId={selectedProblemId}
-          selectedProblem={selectedProblem}
-          themeMode={themeMode}
-          onToggleTheme={toggleTheme}
-        />
+        {isDesktop ? (
+          <DesktopNavBar
+            selectedProblemId={selectedProblemId}
+            selectedProblem={selectedProblem}
+            themeMode={themeMode}
+            onToggleTheme={toggleTheme}
+          />
+        ) : (
+          <MobileHeader
+            themeMode={themeMode}
+            onToggleTheme={toggleTheme}
+            selectedProblemId={selectedProblemId}
+            problems={problems}
+            onSelectProblem={handleSelectProblem}
+            onPreviousProblem={handlePreviousProblem}
+            onNextProblem={handleNextProblem}
+            canGoPrevious={Boolean(previousProblemId)}
+            canGoNext={Boolean(nextProblemId)}
+            isLoading={isLoading}
+            onRun={handleRunCode}
+            onTest={handleRunTests}
+            onToggleProblemCollapsed={ui.toggleProblemCollapsed}
+            isProblemCollapsed={ui.isProblemCollapsed}
+            onOpenReset={ui.openResetConfirm}
+            isMoreMenuOpen={ui.isMoreMenuOpen}
+            onToggleMoreMenu={ui.toggleMoreMenu}
+            onCloseMoreMenu={ui.closeMoreMenu}
+            mobilePane={ui.mobilePane}
+            onSetMobilePane={ui.setMobilePane}
+            hasPendingResult={hasPendingResult}
+            isResetConfirmOpen={ui.isResetConfirmOpen && Boolean(selectedProblem)}
+            onConfirmReset={() => ui.confirmReset(resetToStarterCode)}
+            onCancelReset={ui.cancelResetConfirm}
+          />
+        )}
 
-        <MobileHeader
-          themeMode={themeMode}
-          onToggleTheme={toggleTheme}
-          selectedProblemId={selectedProblemId}
-          problems={problems}
-          onSelectProblem={handleSelectProblem}
-          onPreviousProblem={handlePreviousProblem}
-          onNextProblem={handleNextProblem}
-          canGoPrevious={Boolean(previousProblemId)}
-          canGoNext={Boolean(nextProblemId)}
-          isLoading={isLoading}
-          onRun={handleRunCode}
-          onTest={handleRunTests}
-          onToggleProblemCollapsed={ui.toggleProblemCollapsed}
-          isProblemCollapsed={ui.isProblemCollapsed}
-          onOpenReset={ui.openResetConfirm}
-          isMoreMenuOpen={ui.isMoreMenuOpen}
-          onToggleMoreMenu={ui.toggleMoreMenu}
-          onCloseMoreMenu={ui.closeMoreMenu}
-          mobilePane={ui.mobilePane}
-          onSetMobilePane={ui.setMobilePane}
-          hasPendingResult={hasPendingResult}
-          isResetConfirmOpen={ui.isResetConfirmOpen && Boolean(selectedProblem)}
-          onConfirmReset={() => ui.confirmReset(resetToStarterCode)}
-          onCancelReset={ui.cancelResetConfirm}
-        />
+        {storageError && (
+          <div className="mx-3 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
+            {storageError}
+          </div>
+        )}
 
-        <DesktopWorkspace
-          layoutRef={layoutRef}
-          editorPaneRatio={editorPaneRatio}
-          onResizeStart={onResizeStart}
-          problems={problems}
-          selectedProblemId={selectedProblemId}
-          selectedProblem={selectedProblem}
-          selectedProblemError={selectedProblemError}
-          onSelectProblem={handleSelectProblem}
-          onPreviousProblem={handlePreviousProblem}
-          onNextProblem={handleNextProblem}
-          canGoPrevious={Boolean(previousProblemId)}
-          canGoNext={Boolean(nextProblemId)}
-          code={code}
-          onCodeChange={setCode}
-          selectedProblemIdForEditor={selectedProblemId}
-          themeMode={themeMode}
-          onRun={handleRunCode}
-          onTest={handleRunTests}
-          onReset={resetToStarterCode}
-          isLoading={isLoading}
-          executionResult={executionResult}
-          testResult={testResult}
-          customInput={customInput}
-          onCustomInputChange={setCustomInput}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-
-        <MobileWorkspace
-          mobilePane={ui.mobilePane}
-          isProblemCollapsed={ui.isProblemCollapsed}
-          selectedProblem={selectedProblem}
-          selectedProblemError={selectedProblemError}
-          selectedProblemId={selectedProblemId}
-          code={code}
-          onCodeChange={setCode}
-          themeMode={themeMode}
-          executionResult={executionResult}
-          testResult={testResult}
-          isLoading={isLoading}
-          customInput={customInput}
-          onCustomInputChange={setCustomInput}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        {isDesktop ? (
+          <DesktopWorkspace
+            layoutRef={layoutRef}
+            editorPaneRatio={editorPaneRatio}
+            onResizeStart={onResizeStart}
+            problems={problems}
+            selectedProblemId={selectedProblemId}
+            selectedProblem={selectedProblem}
+            selectedProblemError={selectedProblemError}
+            onSelectProblem={handleSelectProblem}
+            onPreviousProblem={handlePreviousProblem}
+            onNextProblem={handleNextProblem}
+            canGoPrevious={Boolean(previousProblemId)}
+            canGoNext={Boolean(nextProblemId)}
+            code={code}
+            onCodeChange={setCode}
+            themeMode={themeMode}
+            onRun={handleRunCode}
+            onTest={handleRunTests}
+            onReset={resetToStarterCode}
+            isLoading={isLoading}
+            executionResult={executionResult}
+            testResult={testResult}
+            customInput={customInput}
+            onCustomInputChange={setCustomInput}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        ) : (
+          <MobileWorkspace
+            mobilePane={ui.mobilePane}
+            isProblemCollapsed={ui.isProblemCollapsed}
+            selectedProblem={selectedProblem}
+            selectedProblemError={selectedProblemError}
+            selectedProblemId={selectedProblemId}
+            code={code}
+            onCodeChange={setCode}
+            themeMode={themeMode}
+            executionResult={executionResult}
+            testResult={testResult}
+            isLoading={isLoading}
+            customInput={customInput}
+            onCustomInputChange={setCustomInput}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        )}
       </div>
     </div>
   );

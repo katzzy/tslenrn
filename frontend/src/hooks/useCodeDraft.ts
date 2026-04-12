@@ -2,13 +2,21 @@ import { useEffect, useMemo, useState } from 'react';
 
 const STORAGE_KEY = 'code-by-problem-v1';
 const SAVE_DELAY_MS = 300;
+const STORAGE_ERROR_MESSAGE = '本地草稿保存不可用，刷新页面后可能丢失当前代码。';
 
-const readCodeMap = (): Record<number, string> => {
+const readCodeMap = (): { codeMap: Record<number, string>; hasError: boolean } => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Record<number, string>) : {};
-  } catch {
-    return {};
+    return {
+      codeMap: raw ? (JSON.parse(raw) as Record<number, string>) : {},
+      hasError: false,
+    };
+  } catch (error) {
+    console.error('Failed to read code drafts from localStorage.', error);
+    return {
+      codeMap: {},
+      hasError: true,
+    };
   }
 };
 
@@ -18,7 +26,13 @@ interface UseCodeDraftParams {
 }
 
 export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftParams) {
-  const [savedCodeByProblem, setSavedCodeByProblem] = useState<Record<number, string>>(() => readCodeMap());
+  const [initialDraftState] = useState(() => readCodeMap());
+  const [savedCodeByProblem, setSavedCodeByProblem] = useState<Record<number, string>>(
+    () => initialDraftState.codeMap
+  );
+  const [storageError, setStorageError] = useState<string | null>(
+    initialDraftState.hasError ? STORAGE_ERROR_MESSAGE : null
+  );
 
   const code = useMemo(() => {
     if (!selectedProblemId) return '';
@@ -35,7 +49,13 @@ export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftPar
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCodeByProblem));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCodeByProblem));
+        setStorageError((prev) => (prev ? null : prev));
+      } catch (error) {
+        console.error('Failed to persist code drafts to localStorage.', error);
+        setStorageError(STORAGE_ERROR_MESSAGE);
+      }
     }, SAVE_DELAY_MS);
 
     return () => {
@@ -70,5 +90,6 @@ export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftPar
     code,
     setCode,
     resetToStarterCode,
+    storageError,
   };
 }
