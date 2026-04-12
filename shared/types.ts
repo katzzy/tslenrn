@@ -8,6 +8,12 @@ export interface Problem {
   testCases: TestCase[];
 }
 
+export interface ProblemSummary {
+  id: number;
+  title: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
 export interface TestCase {
   input: string;
   expectedOutput: string;

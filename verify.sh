@@ -26,7 +26,7 @@ if [ -f "frontend/src/App.tsx" ]; then echo "  ✅ Main App"; else echo "  ❌ M
 if [ -f "frontend/src/components/CodeEditor.tsx" ]; then echo "  ✅ Code Editor"; else echo "  ❌ Missing editor"; fi
 if [ -f "frontend/src/components/ProblemList.tsx" ]; then echo "  ✅ Problem List"; else echo "  ❌ Missing list"; fi
 if [ -f "frontend/src/components/ResultPanel.tsx" ]; then echo "  ✅ Result Panel"; else echo "  ❌ Missing panel"; fi
-if [ -f "frontend/src/data/problems.ts" ]; then echo "  ✅ Problem data"; else echo "  ❌ Missing data"; fi
+if [ -f "frontend/src/hooks/useProblems.ts" ]; then echo "  ✅ Problem data flow hook"; else echo "  ❌ Missing problem data hook"; fi
 echo ""
 
 # Configuration files
