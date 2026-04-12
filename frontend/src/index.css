@@ -30,7 +30,7 @@ html.dark body {
   }
 
   .ios-segment {
-    @apply rounded-2xl border border-white/80 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-gray-800/80;
+    @apply rounded-2xl border border-slate-300/70 bg-slate-200/75 p-1 dark:border-slate-700/70 dark:bg-slate-800/75;
   }
 
   .ios-toolbar-dot {

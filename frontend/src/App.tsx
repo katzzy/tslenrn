@@ -278,8 +278,11 @@ function App() {
           className="hidden min-h-0 flex-1 gap-3 overflow-hidden bg-slate-50/20 p-2.5 dark:bg-gray-900/10 lg:flex"
         >
           <aside className="ios-panel flex min-h-0 w-[360px] min-w-[320px] flex-col overflow-hidden">
-            <div className="border-b border-white/70 bg-slate-100/70 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-gray-800/60">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">题目</h2>
+            <div className="p-4 pb-3">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">题目</h2>
+              </div>
               <ProblemSelector
                 problems={problems}
                 selectedProblemId={selectedProblemId}
@@ -297,8 +300,11 @@ function App() {
           </aside>
 
           <div className="ios-panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" style={{ flexBasis: `${editorPaneRatio * 100}%` }}>
-            <div className="flex items-center justify-between border-b border-white/70 bg-slate-100/70 px-4 py-2 backdrop-blur-xl dark:border-white/10 dark:bg-gray-800/60">
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">代码编辑器</span>
+            <div className="flex items-center justify-between px-3 pt-3 pb-1">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">代码编辑器</span>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleRunCode}
@@ -322,9 +328,9 @@ function App() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 p-2">
+            <div className="flex-1 p-3 pt-2">
               <div className="h-full overflow-hidden rounded-xl border border-white/70 dark:border-white/10">
-                <CodeEditor code={code} onChange={setCode} theme={themeMode === 'dark' ? 'vs-dark' : 'vs'} />
+                <CodeEditor code={code} onChange={setCode} theme={themeMode === 'dark' ? 'tslenrn-dark' : 'tslenrn-light'} />
               </div>
             </div>
           </div>
@@ -371,14 +377,13 @@ function App() {
           )}
 
           <div className={`${mobilePane === 'editor' ? 'flex' : 'hidden'} ios-panel min-h-[300px] flex-col overflow-hidden`}>
-            <div className="border-b border-white/70 bg-slate-100/70 px-4 py-2 backdrop-blur-xl dark:border-white/10 dark:bg-gray-800/60">
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                代码编辑器
-              </span>
+            <div className="flex items-center gap-2 px-3 pt-3 pb-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">代码编辑器</span>
             </div>
-            <div className="flex-1 p-2">
+            <div className="flex-1 p-3 pt-2">
               <div className="h-full overflow-hidden rounded-xl border border-white/70 dark:border-white/10">
-                <CodeEditor code={code} onChange={setCode} theme={themeMode === 'dark' ? 'vs-dark' : 'vs'} />
+                <CodeEditor code={code} onChange={setCode} theme={themeMode === 'dark' ? 'tslenrn-dark' : 'tslenrn-light'} />
               </div>
             </div>
           </div>

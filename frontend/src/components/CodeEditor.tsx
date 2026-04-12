@@ -29,6 +29,24 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
     if (isMonacoConfigured) return;
 
+    monaco.editor.defineTheme('tslenrn-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': '#f8fafc',
+      },
+    });
+
+    monaco.editor.defineTheme('tslenrn-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': '#111827',
+      },
+    });
+
     // Configure TypeScript compiler options
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
       target: monaco.languages.typescript.ScriptTarget.ES2020,
@@ -53,11 +71,12 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       nodeTypings,
       'ts:filename/node.d.ts'
     );
+    monaco.editor.setTheme(theme);
     isMonacoConfigured = true;
   };
 
   return (
-    <div className={`h-full w-full ${theme === 'vs-dark' ? 'bg-[#1e1e1e]' : 'bg-slate-50'}`}>
+    <div className={`h-full w-full ${theme === 'tslenrn-dark' ? 'bg-gray-900' : 'bg-slate-50'}`}>
       <Editor
         height={height}
         language={language}
@@ -71,13 +90,19 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         onMount={handleEditorDidMount}
         options={{
           minimap: { enabled: false },
-          fontSize: 14,
+          fontSize: 16,
+          lineHeight: 24,
           lineNumbers: 'on',
+          lineNumbersMinChars: 2,
           roundedSelection: false,
           scrollBeyondLastLine: false,
           automaticLayout: true,
           tabSize: 2,
           wordWrap: 'on',
+          padding: {
+            top: 12,
+            bottom: 8,
+          },
           formatOnPaste: true,
           formatOnType: true,
           fixedOverflowWidgets: true,

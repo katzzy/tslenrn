@@ -54,9 +54,10 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
 
   return (
     <div className="flex h-full flex-col bg-transparent">
-      <div className="border-b border-white/70 bg-slate-50/70 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/45">
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          ACM 输入
+      <div className="p-3 pb-2">
+        <label className="mb-1 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+          <span>输入</span>
         </label>
         <textarea
           value={customInput}
@@ -67,24 +68,24 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-white/70 px-2 pt-2 dark:border-white/10">
-        <div className="ios-segment flex">
+      <div className="px-2 pb-2">
+        <div className="flex items-center gap-2">
         <button
           onClick={() => onTabChange('output')}
-          className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+          className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
             activeTab === 'output'
-              ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
-              : 'text-gray-500 hover:bg-white/70 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-gray-900'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
           运行输出
         </button>
         <button
           onClick={() => onTabChange('tests')}
-          className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+          className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
             activeTab === 'tests'
-              ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
-              : 'text-gray-500 hover:bg-white/70 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-gray-900'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
           测试结果
