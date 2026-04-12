@@ -131,7 +131,7 @@ process.stdout.write(out.join('\n'));
 ```text
 tslenrn/
 ├── frontend/
-│   ├── src/components/    # 页面组件（题目列表、题面、编辑器、结果面板）
+│   ├── src/components/    # 页面组件（工作区、题面、编辑器、结果面板）
 │   ├── src/hooks/         # 业务 Hook（题目、草稿、运行）
 │   ├── src/editor/        # 编辑器相关配置（如 Node typings）
 │   ├── src/utils/api.ts   # 前端 API 调用

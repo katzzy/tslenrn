@@ -2,15 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import ProblemDetail from './components/ProblemDetail';
 import CodeEditor from './components/CodeEditor';
 import ResultPanel from './components/ResultPanel';
+import DesktopNavBar from './components/workspace/DesktopNavBar';
+import ProblemSelector from './components/workspace/ProblemSelector';
+import ThemeToggle from './components/workspace/ThemeToggle';
 import { useProblems } from './hooks/useProblems';
 import { useCodeDraft } from './hooks/useCodeDraft';
 import { useRunner } from './hooks/useRunner';
+import { useThemeMode } from './hooks/useThemeMode';
 
 function App() {
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
-    const storedTheme = window.localStorage.getItem('theme-mode-v1');
-    return storedTheme === 'dark' ? 'dark' : 'light';
-  });
+  const { themeMode, toggleTheme } = useThemeMode();
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isProblemCollapsed, setIsProblemCollapsed] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -69,16 +70,6 @@ function App() {
     setMobilePane('result');
   };
 
-  const toggleTheme = () => {
-    setThemeMode((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', themeMode === 'dark');
-    document.body.classList.toggle('dark', themeMode === 'dark');
-    window.localStorage.setItem('theme-mode-v1', themeMode);
-  }, [themeMode]);
-
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (!isDraggingRef.current || !layoutRef.current) return;
@@ -126,34 +117,15 @@ function App() {
 
   const hasPendingResult = !isLoading && mobilePane !== 'result' && (executionResult || testResult);
 
-  return (
+    return (
     <div className={`${themeMode === 'dark' ? 'dark' : ''} flex h-screen flex-col gap-3 bg-slate-100 p-3 dark:bg-gray-950 lg:flex-row`}>
       <div className="ios-surface min-h-0 flex flex-1 flex-col overflow-hidden">
-        <header className="hidden items-center justify-between border-b border-white/75 bg-white/70 px-5 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/65 lg:flex">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span className="ios-toolbar-dot bg-red-400" />
-              <span className="ios-toolbar-dot bg-amber-400" />
-              <span className="ios-toolbar-dot bg-emerald-400" />
-            </div>
-            <div>
-              <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
-                TypeScript 在线学习平台
-              </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">ACM 练习工作区</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="rounded-full border border-white/80 bg-white/85 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-white dark:border-white/10 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-800"
-            >
-              {themeMode === 'dark' ? '浅色模式' : '深色模式'}
-            </button>
-            <span className="ios-chip">题号 #{selectedProblemId}</span>
-            {selectedProblem && <span className="ios-chip max-w-56 truncate">{selectedProblem.title}</span>}
-          </div>
-        </header>
+        <DesktopNavBar
+          selectedProblemId={selectedProblemId}
+          selectedProblem={selectedProblem}
+          themeMode={themeMode}
+          onToggleTheme={toggleTheme}
+        />
 
         <header className="sticky top-0 z-20 border-b border-white/80 bg-white/75 px-6 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70 lg:hidden">
           <div className="mb-3 flex items-center justify-between">
@@ -164,12 +136,7 @@ function App() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Workspace</span>
-              <button
-                onClick={toggleTheme}
-                className="rounded-full border border-white/80 bg-white/85 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-white dark:border-white/10 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-800"
-              >
-                {themeMode === 'dark' ? '浅色' : '深色'}
-              </button>
+              <ThemeToggle themeMode={themeMode} onToggle={toggleTheme} compact />
             </div>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -235,21 +202,13 @@ function App() {
             <label htmlFor="problem-select" className="mb-1 block text-sm text-gray-600 dark:text-gray-300">
               选择题目
             </label>
-            <select
+            <ProblemSelector
               id="problem-select"
-              value={selectedProblemId}
-              onChange={(event) => {
-                const id = Number(event.target.value);
-                handleSelectProblem(id);
-              }}
-               className="w-full rounded-2xl border border-white/80 bg-white/80 px-3 py-2 text-sm text-gray-900 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-100"
-             >
-              {problems.map((problem) => (
-                <option key={problem.id} value={problem.id}>
-                  {problem.id}. {problem.title}
-                </option>
-              ))}
-            </select>
+              problems={problems}
+              selectedProblemId={selectedProblemId}
+              onSelect={handleSelectProblem}
+              className="w-full rounded-2xl border border-white/80 bg-white/80 px-3 py-2 text-sm text-gray-900 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-100"
+            />
           </div>
 
           <div className="mt-3 lg:hidden">
@@ -321,20 +280,12 @@ function App() {
           <aside className="ios-panel flex min-h-0 w-[360px] min-w-[320px] flex-col overflow-hidden">
             <div className="border-b border-white/70 bg-slate-100/70 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-gray-800/60">
               <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">题目</h2>
-              <select
-                value={selectedProblemId}
-                onChange={(event) => {
-                  const id = Number(event.target.value);
-                  handleSelectProblem(id);
-                }}
+              <ProblemSelector
+                problems={problems}
+                selectedProblemId={selectedProblemId}
+                onSelect={handleSelectProblem}
                 className="mt-2 w-full rounded-xl border border-white/80 bg-white/85 px-3 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-100"
-              >
-                {problems.map((problem) => (
-                  <option key={problem.id} value={problem.id}>
-                    {problem.id}. {problem.title}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             {selectedProblem ? (
               <ProblemDetail problem={selectedProblem} />
