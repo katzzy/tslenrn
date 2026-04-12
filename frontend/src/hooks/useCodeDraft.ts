@@ -22,7 +22,15 @@ export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftPar
 
   const code = useMemo(() => {
     if (!selectedProblemId) return '';
-    return savedCodeByProblem[selectedProblemId] ?? starterCode ?? '';
+    const savedCode = savedCodeByProblem[selectedProblemId];
+
+    // Monaco may emit a transient empty change when model switches; don't let that
+    // permanently override non-empty starter code.
+    if (savedCode === '' && starterCode && starterCode.length > 0) {
+      return starterCode;
+    }
+
+    return savedCode ?? starterCode ?? '';
   }, [savedCodeByProblem, selectedProblemId, starterCode]);
 
   useEffect(() => {
@@ -38,6 +46,14 @@ export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftPar
   const setCode = (nextCode: string) => {
     if (!selectedProblemId) return;
     setSavedCodeByProblem((prev) => {
+      if (
+        nextCode === '' &&
+        prev[selectedProblemId] === undefined &&
+        starterCode &&
+        starterCode.length > 0
+      ) {
+        return prev;
+      }
       if (prev[selectedProblemId] === nextCode) return prev;
       return { ...prev, [selectedProblemId]: nextCode };
     });
