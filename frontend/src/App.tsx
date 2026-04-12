@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import ProblemList from './components/ProblemList';
+import { useEffect, useRef, useState } from 'react';
 import ProblemDetail from './components/ProblemDetail';
 import CodeEditor from './components/CodeEditor';
 import ResultPanel from './components/ResultPanel';
@@ -10,7 +9,11 @@ import { useRunner } from './hooks/useRunner';
 function App() {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isProblemCollapsed, setIsProblemCollapsed] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [mobilePane, setMobilePane] = useState<'problem' | 'editor' | 'result'>('problem');
+  const [editorPaneRatio, setEditorPaneRatio] = useState(0.68);
+  const layoutRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
   const {
     problems,
     selectedProblemId,
@@ -45,19 +48,43 @@ function App() {
     setSelectedProblemId(id);
     setIsResetConfirmOpen(false);
     setIsProblemCollapsed(false);
+    setIsMoreMenuOpen(false);
     setMobilePane('problem');
     resetForProblemChange();
   };
 
   const handleRunCode = () => {
     runCode(code, customInput);
+    setIsMoreMenuOpen(false);
     setMobilePane('result');
   };
 
   const handleRunTests = () => {
     runTests(code, selectedProblemId);
+    setIsMoreMenuOpen(false);
     setMobilePane('result');
   };
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isDraggingRef.current || !layoutRef.current) return;
+      const rect = layoutRef.current.getBoundingClientRect();
+      const ratio = (event.clientX - rect.left) / rect.width;
+      const clampedRatio = Math.min(0.85, Math.max(0.45, ratio));
+      setEditorPaneRatio(clampedRatio);
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   if (isBootstrapping) {
     return (
@@ -83,17 +110,40 @@ function App() {
     );
   }
 
-  return (
-    <div className="flex h-screen flex-col lg:flex-row bg-slate-100/60 dark:bg-gray-950 p-3 gap-3">
-      <ProblemList
-        className="hidden lg:flex"
-        problems={problems}
-        selectedId={selectedProblemId}
-        onSelect={handleSelectProblem}
-      />
+  const hasPendingResult = !isLoading && mobilePane !== 'result' && (executionResult || testResult);
 
-      <div className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-gray-800 bg-white/90 dark:bg-gray-900 shadow-sm backdrop-blur">
-        <header className="border-b border-gray-200/80 dark:border-gray-800 px-6 py-4 bg-white/80 dark:bg-gray-900/80">
+  return (
+    <div className="flex h-screen flex-col gap-3 bg-slate-100 p-3 dark:bg-gray-950 lg:flex-row">
+      <div className="ios-surface min-h-0 flex flex-1 flex-col overflow-hidden">
+        <header className="hidden items-center justify-between border-b border-white/75 bg-white/70 px-5 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/65 lg:flex">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="ios-toolbar-dot bg-red-400" />
+              <span className="ios-toolbar-dot bg-amber-400" />
+              <span className="ios-toolbar-dot bg-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
+                TypeScript 在线学习平台
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">ACM 练习工作区</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="ios-chip">题号 #{selectedProblemId}</span>
+            {selectedProblem && <span className="ios-chip max-w-56 truncate">{selectedProblem.title}</span>}
+          </div>
+        </header>
+
+        <header className="sticky top-0 z-20 border-b border-white/80 bg-white/75 px-6 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70 lg:hidden">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="ios-toolbar-dot bg-red-400" />
+              <span className="ios-toolbar-dot bg-amber-400" />
+              <span className="ios-toolbar-dot bg-emerald-400" />
+            </div>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Workspace</span>
+          </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -101,41 +151,59 @@ function App() {
               </h1>
               <div className="mt-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <span>编写代码，运行测试，掌握 TypeScript</span>
-                <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs">ACM 模式</span>
-                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-xs">题号 #{selectedProblemId}</span>
+                <span className="ios-chip">ACM 模式</span>
+                <span className="ios-chip">题号 #{selectedProblemId}</span>
               </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => setIsProblemCollapsed((prev) => !prev)}
-                className="px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/80 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
-              >
-                {isProblemCollapsed ? '展开题面' : '收起题面'}
-              </button>
-              <button
-                onClick={handleResetCode}
-                className="px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/80 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
-              >
-                重置代码
-              </button>
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleRunCode}
                 disabled={isLoading}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_-10px_rgba(37,99,235,0.9)] transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 ▶ 运行
               </button>
               <button
                 onClick={handleRunTests}
                 disabled={isLoading}
-                className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_-12px_rgba(15,23,42,0.95)] transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 ✓ 提交测试
               </button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+                  className="rounded-full border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                >
+                  更多
+                </button>
+                {isMoreMenuOpen && (
+                  <div className="absolute right-0 z-30 mt-2 w-36 rounded-2xl border border-white/80 bg-white/85 p-1 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/80">
+                    <button
+                      onClick={() => {
+                        setIsProblemCollapsed((prev) => !prev);
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full rounded-xl px-3 py-2 text-left text-sm text-gray-700 hover:bg-slate-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                    >
+                      {isProblemCollapsed ? '展开题面' : '收起题面'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleResetCode();
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full rounded-xl px-3 py-2 text-left text-sm text-gray-700 hover:bg-slate-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                    >
+                      重置代码
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="mt-3 lg:hidden">
+          <div className="mt-3 max-w-xl">
             <label htmlFor="problem-select" className="mb-1 block text-sm text-gray-600 dark:text-gray-300">
               选择题目
             </label>
@@ -146,8 +214,8 @@ function App() {
                 const id = Number(event.target.value);
                 handleSelectProblem(id);
               }}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-            >
+               className="w-full rounded-2xl border border-white/80 bg-white/80 px-3 py-2 text-sm text-gray-900 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-100"
+             >
               {problems.map((problem) => (
                 <option key={problem.id} value={problem.id}>
                   {problem.id}. {problem.title}
@@ -157,13 +225,13 @@ function App() {
           </div>
 
           <div className="mt-3 lg:hidden">
-            <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1">
+            <div className="ios-segment grid grid-cols-3">
               <button
                 onClick={() => setMobilePane('problem')}
                 className={`px-3 py-1.5 text-sm rounded-md ${
                   mobilePane === 'problem'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-700'
                 }`}
               >
                 题面
@@ -172,8 +240,8 @@ function App() {
                 onClick={() => setMobilePane('editor')}
                 className={`px-3 py-1.5 text-sm rounded-md ${
                   mobilePane === 'editor'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-700'
                 }`}
               >
                 编辑
@@ -182,11 +250,14 @@ function App() {
                 onClick={() => setMobilePane('result')}
                 className={`px-3 py-1.5 text-sm rounded-md ${
                   mobilePane === 'result'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-700'
                 }`}
               >
-                结果
+                <span className="inline-flex items-center gap-1">
+                  结果
+                  {hasPendingResult && <span className="inline-block w-2 h-2 rounded-full bg-red-500" />}
+                </span>
               </button>
             </div>
           </div>
@@ -215,62 +286,125 @@ function App() {
           )}
         </header>
 
-        {selectedProblem && !isProblemCollapsed ? (
-          <>
-            <div className="hidden lg:block">
+        <div
+          ref={layoutRef}
+          className="hidden min-h-0 flex-1 gap-3 overflow-hidden bg-slate-50/20 p-2.5 dark:bg-gray-900/10 lg:flex"
+        >
+          <aside className="ios-panel flex min-h-0 w-[360px] min-w-[320px] flex-col overflow-hidden">
+            <div className="border-b border-white/70 bg-slate-100/70 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-gray-800/60">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">题目</h2>
+              <select
+                value={selectedProblemId}
+                onChange={(event) => {
+                  const id = Number(event.target.value);
+                  handleSelectProblem(id);
+                }}
+                className="mt-2 w-full rounded-xl border border-white/80 bg-white/85 px-3 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-100"
+              >
+                {problems.map((problem) => (
+                  <option key={problem.id} value={problem.id}>
+                    {problem.id}. {problem.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedProblem ? (
               <ProblemDetail problem={selectedProblem} />
-            </div>
-            {mobilePane === 'problem' && (
-              <div className="lg:hidden">
-                <ProblemDetail problem={selectedProblem} />
-              </div>
-            )}
-          </>
-        ) : selectedProblem && isProblemCollapsed ? (
-          <>
-            <div className="hidden lg:block px-6 py-3 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/80 dark:border-gray-800 text-sm text-gray-600 dark:text-gray-300">
-              题面已收起，点击“展开题面”查看完整描述。
-            </div>
-            {mobilePane === 'problem' && (
-              <div className="lg:hidden px-6 py-3 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/80 dark:border-gray-800 text-sm text-gray-600 dark:text-gray-300">
-                题面已收起，点击“展开题面”查看完整描述。
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="hidden lg:block p-6 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/80 dark:border-gray-800">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
+            ) : (
+              <div className="p-6 text-sm text-gray-500 dark:text-gray-400">
                 {selectedProblemError || '正在加载题目详情...'}
               </div>
-            </div>
-            {mobilePane === 'problem' && (
-              <div className="lg:hidden p-6 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/80 dark:border-gray-800">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {selectedProblemError || '正在加载题目详情...'}
-                </div>
-              </div>
             )}
-          </>
-        )}
+          </aside>
 
-        <div className="flex-1 min-h-0 flex flex-col xl:flex-row overflow-hidden bg-slate-50/40 dark:bg-gray-900/40">
-          <div
-            className={`${mobilePane === 'editor' ? 'flex' : 'hidden'} lg:flex flex-1 min-h-[300px] xl:min-h-0 flex-col border-b xl:border-b-0 xl:border-r border-gray-200 dark:border-gray-800`}
-          >
-            <div className="px-4 py-2 bg-slate-100/80 dark:bg-gray-800/70 border-b border-gray-200 dark:border-gray-700">
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                代码编辑器
-              </span>
+          <div className="ios-panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" style={{ flexBasis: `${editorPaneRatio * 100}%` }}>
+            <div className="flex items-center justify-between border-b border-white/70 bg-slate-100/70 px-4 py-2 backdrop-blur-xl dark:border-white/10 dark:bg-gray-800/60">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">代码编辑器</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRunCode}
+                  disabled={isLoading}
+                  className="rounded-full bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  运行
+                </button>
+                <button
+                  onClick={handleRunTests}
+                  disabled={isLoading}
+                  className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                >
+                  提交测试
+                </button>
+                <button
+                  onClick={handleResetCode}
+                  className="rounded-full border border-white/80 bg-white/85 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white dark:border-white/10 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                  重置
+                </button>
+              </div>
             </div>
-            <div className="flex-1">
-              <CodeEditor code={code} onChange={setCode} />
+            <div className="flex-1 p-2">
+              <div className="h-full overflow-hidden rounded-xl border border-white/70 dark:border-white/10">
+                <CodeEditor code={code} onChange={setCode} />
+              </div>
             </div>
           </div>
 
           <div
-            className={`${mobilePane === 'result' ? 'flex' : 'hidden'} lg:flex xl:w-1/2 min-h-[280px] xl:min-h-0 flex-col bg-white/80 dark:bg-gray-900/70`}
+            className="group flex w-3 cursor-col-resize items-center justify-center bg-transparent"
+            onMouseDown={() => {
+              isDraggingRef.current = true;
+            }}
           >
+            <div className="h-16 w-[3px] rounded-full bg-slate-300/40 transition-colors group-hover:bg-slate-400 dark:bg-gray-700/70 dark:group-hover:bg-gray-600" />
+          </div>
+
+          <div className="ios-panel flex min-h-0 min-w-[300px] flex-col overflow-hidden" style={{ flexBasis: `${(1 - editorPaneRatio) * 100}%` }}>
+            <ResultPanel
+              executionResult={executionResult}
+              testResult={testResult}
+              isLoading={isLoading}
+              customInput={customInput}
+              onCustomInputChange={setCustomInput}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden bg-slate-50/20 p-3 dark:bg-gray-900/10 lg:hidden">
+          {!isProblemCollapsed && (
+            <div className={`${mobilePane === 'problem' ? 'flex' : 'hidden'} ios-panel min-h-[260px] flex-col overflow-hidden`}>
+              {selectedProblem ? (
+                <ProblemDetail problem={selectedProblem} />
+              ) : (
+                <div className="p-6 text-sm text-gray-500 dark:text-gray-400">
+                  {selectedProblemError || '正在加载题目详情...'}
+                </div>
+              )}
+            </div>
+          )}
+
+          {isProblemCollapsed && mobilePane === 'problem' && (
+            <div className="ios-panel flex min-h-[160px] items-center justify-center p-6 text-sm text-gray-500 dark:text-gray-400">
+              题面已收起，请在“更多”中展开题面。
+            </div>
+          )}
+
+          <div className={`${mobilePane === 'editor' ? 'flex' : 'hidden'} ios-panel min-h-[300px] flex-col overflow-hidden`}>
+            <div className="border-b border-white/70 bg-slate-100/70 px-4 py-2 backdrop-blur-xl dark:border-white/10 dark:bg-gray-800/60">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                代码编辑器
+              </span>
+            </div>
+            <div className="flex-1 p-2">
+              <div className="h-full overflow-hidden rounded-xl border border-white/70 dark:border-white/10">
+                <CodeEditor code={code} onChange={setCode} />
+              </div>
+            </div>
+          </div>
+
+          <div className={`${mobilePane === 'result' ? 'flex' : 'hidden'} ios-panel min-h-[280px] flex-col overflow-hidden`}>
             <ResultPanel
               executionResult={executionResult}
               testResult={testResult}

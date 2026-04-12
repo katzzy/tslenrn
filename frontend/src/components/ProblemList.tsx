@@ -29,8 +29,8 @@ const ProblemList: React.FC<ProblemListProps> = ({ problems, selectedId, onSelec
   };
 
   return (
-    <div className={`w-full lg:w-72 h-full min-h-0 flex flex-col bg-white/90 dark:bg-gray-900 border border-slate-200/70 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm backdrop-blur ${className}`}>
-      <div className="p-4 border-b border-gray-200/80 dark:border-gray-800">
+    <div className={`ios-surface w-full lg:w-72 h-full min-h-0 flex flex-col overflow-hidden ${className}`}>
+      <div className="border-b border-white/80 p-4 dark:border-white/10">
         <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">题目列表</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">{problems.length} 道题目</p>
       </div>
@@ -39,10 +39,10 @@ const ProblemList: React.FC<ProblemListProps> = ({ problems, selectedId, onSelec
           <button
             key={problem.id}
             onClick={() => onSelect(problem.id)}
-            className={`min-w-56 lg:min-w-0 w-full text-left p-3 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 lg:mb-2 ${
+            className={`min-w-56 lg:min-w-0 w-full text-left p-3 rounded-2xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 lg:mb-2 ${
               selectedId === problem.id
-                ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-400 dark:border-blue-500 shadow-sm'
-                : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
+                ? 'border border-blue-300 bg-blue-50/85 shadow-sm dark:border-blue-500 dark:bg-blue-900/35'
+                : 'border border-transparent hover:bg-white/70 dark:hover:bg-gray-800/70'
             }`}
           >
             <div className="flex items-center justify-between mb-1">

@@ -53,8 +53,8 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white/80 dark:bg-gray-900/70">
-      <div className="p-3 border-b border-gray-200 dark:border-gray-800 bg-slate-50/70 dark:bg-gray-900/60">
+    <div className="flex h-full flex-col bg-transparent">
+      <div className="border-b border-white/70 bg-slate-50/70 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/45">
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           ACM 输入
         </label>
@@ -62,32 +62,34 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
           value={customInput}
           onChange={(e) => onCustomInputChange(e.target.value)}
           placeholder="例如：&#10;1 2"
-          className="w-full h-24 px-3 py-2 text-sm font-mono rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="h-24 w-full rounded-2xl border border-white/75 bg-white/90 px-3 py-2 font-mono text-sm text-gray-900 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-100"
         />
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 dark:border-gray-800 px-2 pt-2">
+      <div className="border-b border-white/70 px-2 pt-2 dark:border-white/10">
+        <div className="ios-segment flex">
         <button
           onClick={() => onTabChange('output')}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+          className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
             activeTab === 'output'
-              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
+              : 'text-gray-500 hover:bg-white/70 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300'
           }`}
         >
           运行输出
         </button>
         <button
           onClick={() => onTabChange('tests')}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+          className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
             activeTab === 'tests'
-              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
+              : 'text-gray-500 hover:bg-white/70 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300'
           }`}
         >
           测试结果
         </button>
+        </div>
       </div>
 
       {/* Content */}
