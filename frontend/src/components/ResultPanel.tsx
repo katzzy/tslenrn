@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { ExecutionResult, TestResult } from '../types/index';
 
 interface ResultPanelProps {
@@ -20,6 +20,38 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   activeTab,
   onTabChange,
 }) => {
+  const testCaseRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const failedIndexes = testResult
+    ? testResult.results.reduce<number[]>((indexes, result, index) => {
+        if (!result.passed) indexes.push(index);
+        return indexes;
+      }, [])
+    : [];
+
+  const renderDiff = (source: string, target: string) => {
+    const length = Math.max(source.length, target.length);
+    const chars: React.ReactNode[] = [];
+    for (let i = 0; i < length; i++) {
+      const char = source[i] ?? '';
+      const isDifferent = char !== (target[i] ?? '');
+      chars.push(
+        <span
+          key={i}
+          className={isDifferent ? 'bg-red-200/70 text-red-900 dark:bg-red-900/40 dark:text-red-100' : undefined}
+        >
+          {char || '∅'}
+        </span>
+      );
+    }
+    return chars;
+  };
+
+  const jumpToFirstFailed = () => {
+    if (failedIndexes.length === 0) return;
+    const firstFailedRef = testCaseRefs.current[failedIndexes[0]];
+    firstFailedRef?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
     <div className="flex flex-col h-full bg-white/80 dark:bg-gray-900/70">
       <div className="p-3 border-b border-gray-200 dark:border-gray-800 bg-slate-50/70 dark:bg-gray-900/60">
@@ -133,6 +165,17 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
               </span>
             </div>
 
+            {failedIndexes.length > 0 && (
+              <div className="flex justify-end">
+                <button
+                  onClick={jumpToFirstFailed}
+                  className="text-sm px-3 py-1.5 rounded-md border border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                >
+                  跳到首个失败用例
+                </button>
+              </div>
+            )}
+
             {testResult.error && (
                 <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl text-sm text-red-800 dark:text-red-200 border border-red-200 dark:border-red-900/40">
                   {testResult.error}
@@ -143,6 +186,9 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
               {testResult.results.map((result, index) => (
                 <div
                   key={index}
+                  ref={(element) => {
+                    testCaseRefs.current[index] = element;
+                  }}
                   className={`p-3 rounded-xl border ${
                     result.passed
                       ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
@@ -173,14 +219,33 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
                           <span className="font-semibold">输入：</span>
                           <code className="ml-1 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded">{result.input}</code>
                         </div>
-                        <div>
-                          <span className="font-semibold">期望：</span>
-                          <code className="ml-1 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded">{result.expected}</code>
-                        </div>
-                        <div>
-                          <span className="font-semibold">实际：</span>
-                          <code className="ml-1 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded">{result.actual}</code>
-                        </div>
+                        {result.passed ? (
+                          <>
+                            <div>
+                              <span className="font-semibold">期望：</span>
+                              <code className="ml-1 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded">{result.expected}</code>
+                            </div>
+                            <div>
+                              <span className="font-semibold">实际：</span>
+                              <code className="ml-1 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded">{result.actual}</code>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <span className="font-semibold">期望（差异高亮）：</span>
+                              <pre className="mt-1 bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700 whitespace-pre-wrap font-mono">
+                                {renderDiff(result.expected, result.actual)}
+                              </pre>
+                            </div>
+                            <div>
+                              <span className="font-semibold">实际（差异高亮）：</span>
+                              <pre className="mt-1 bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700 whitespace-pre-wrap font-mono">
+                                {renderDiff(result.actual, result.expected)}
+                              </pre>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </>
                   )}
