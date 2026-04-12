@@ -1,164 +1,86 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ProblemList from './components/ProblemList';
 import ProblemDetail from './components/ProblemDetail';
 import CodeEditor from './components/CodeEditor';
 import ResultPanel from './components/ResultPanel';
-import { executeCode, testCode, getProblems, getProblem } from './utils/api';
-import type { ExecutionResult, TestResult, Problem, ProblemSummary } from './types/index';
-
-const acmStarterCode = `import * as fs from 'fs';
-const input = fs.readFileSync(0, 'utf8').trim();
-const tokens = input.length ? input.split(/\\s+/) : [];
-let idx = 0;
-const next = () => tokens[idx++];
-
-// ACM 模式：从 stdin 读取，按题目要求输出到 stdout
-`;
-
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (typeof error === 'object' && error !== null) {
-    const maybeError = error as {
-      response?: { data?: { error?: string } };
-      message?: string;
-    };
-    return maybeError.response?.data?.error || maybeError.message || fallback;
-  }
-  return fallback;
-};
+import { useProblems } from './hooks/useProblems';
+import { useCodeDraft } from './hooks/useCodeDraft';
+import { useRunner } from './hooks/useRunner';
 
 function App() {
-  const [problems, setProblems] = useState<ProblemSummary[]>([]);
-  const [problemDetails, setProblemDetails] = useState<Record<number, Problem>>({});
-  const [selectedProblemId, setSelectedProblemId] = useState<number>(0);
-  const selectedProblem = selectedProblemId ? problemDetails[selectedProblemId] : undefined;
-  const [code, setCode] = useState(acmStarterCode);
-  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [customInput, setCustomInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'output' | 'tests'>('output');
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
-
-  useEffect(() => {
-    const loadProblemList = async () => {
-      try {
-        const list = await getProblems();
-        setProblems(list);
-        if (list.length > 0) {
-          setSelectedProblemId(list[0].id);
-        }
-      } catch {
-        setProblems([]);
-      } finally {
-        setIsBootstrapping(false);
-      }
-    };
-
-    loadProblemList();
-  }, []);
-
-  useEffect(() => {
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('code-')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
-  }, []);
-
-  useEffect(() => {
-    if (!selectedProblemId || problemDetails[selectedProblemId]) return;
-
-    const loadProblemDetail = async () => {
-      try {
-        const detail = await getProblem(selectedProblemId);
-        setProblemDetails((prev) => ({ ...prev, [selectedProblemId]: detail }));
-      } catch {
-        // Keep previous state and let UI show fallback loading state.
-      }
-    };
-
-    loadProblemDetail();
-  }, [selectedProblemId, problemDetails]);
-
-  useEffect(() => {
-    if (!selectedProblemId) return;
-    setCode(selectedProblem?.starterCode || acmStarterCode);
-  }, [selectedProblemId, selectedProblem]);
-
-  const handleRunCode = async () => {
-    setIsLoading(true);
-    setActiveTab('output');
-    setExecutionResult(null);
-    setTestResult(null);
-
-    try {
-      const result = await executeCode(code, customInput);
-      setExecutionResult(result);
-    } catch (error: unknown) {
-      setExecutionResult({
-        success: false,
-        error: getErrorMessage(error, '执行失败'),
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleTestCode = async () => {
-    setIsLoading(true);
-    setActiveTab('tests');
-    setExecutionResult(null);
-    setTestResult(null);
-
-    try {
-      const result = await testCode(code, selectedProblemId);
-      setTestResult(result);
-    } catch (error: unknown) {
-      setTestResult({
-        success: false,
-        passed: 0,
-        total: 0,
-        results: [],
-        error: getErrorMessage(error, '测试失败'),
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const {
+    problems,
+    selectedProblemId,
+    selectedProblem,
+    setSelectedProblemId,
+    isBootstrapping,
+    listError,
+    selectedProblemError,
+  } = useProblems();
+  const { code, setCode, resetToStarterCode } = useCodeDraft({
+    selectedProblemId,
+    starterCode: selectedProblem?.starterCode,
+  });
+  const {
+    executionResult,
+    testResult,
+    isLoading,
+    customInput,
+    setCustomInput,
+    activeTab,
+    setActiveTab,
+    runCode,
+    runTests,
+    resetForProblemChange,
+  } = useRunner();
 
   const handleResetCode = () => {
-    if (selectedProblem && confirm('确定要重置代码吗？')) {
-      setCode(selectedProblem.starterCode || acmStarterCode);
-    }
+    setIsResetConfirmOpen(true);
+  };
+
+  const handleSelectProblem = (id: number) => {
+    setSelectedProblemId(id);
+    setIsResetConfirmOpen(false);
+    resetForProblemChange();
   };
 
   if (isBootstrapping) {
-    return <div className="flex items-center justify-center h-screen">加载题目中...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-100/60 dark:bg-gray-950">
+        <div className="text-center text-gray-600 dark:text-gray-300">
+          <div className="text-3xl mb-2">📚</div>
+          <p className="font-medium">正在加载题目</p>
+          <p className="text-sm">请稍候...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!selectedProblemId || problems.length === 0) {
-    return <div className="flex items-center justify-center h-screen">未获取到题目列表</div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-100/60 dark:bg-gray-950">
+        <div className="text-center text-gray-600 dark:text-gray-300">
+          <div className="text-3xl mb-2">⚠️</div>
+          <p className="font-medium">{listError || '未获取到题目列表'}</p>
+          <p className="text-sm">请检查后端服务与 API 配置</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex h-screen bg-slate-100/60 dark:bg-gray-950 p-3 gap-3">
+    <div className="flex h-screen flex-col lg:flex-row bg-slate-100/60 dark:bg-gray-950 p-3 gap-3">
       <ProblemList
+        className="hidden lg:flex"
         problems={problems}
         selectedId={selectedProblemId}
-        onSelect={(id) => {
-          setSelectedProblemId(id);
-          setExecutionResult(null);
-          setTestResult(null);
-          setCustomInput('');
-        }}
+        onSelect={handleSelectProblem}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-gray-800 bg-white/90 dark:bg-gray-900 shadow-sm backdrop-blur">
+      <div className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-gray-800 bg-white/90 dark:bg-gray-900 shadow-sm backdrop-blur">
         <header className="border-b border-gray-200/80 dark:border-gray-800 px-6 py-4 bg-white/80 dark:bg-gray-900/80">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
                 TypeScript 在线学习平台
@@ -169,41 +91,87 @@ function App() {
                 <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-xs">题号 #{selectedProblemId}</span>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleResetCode}
-                className="px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/80 transition-colors shadow-sm"
+                className="px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/80 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 重置代码
               </button>
               <button
-                onClick={handleRunCode}
+                onClick={() => runCode(code, customInput)}
                 disabled={isLoading}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 ▶ 运行
               </button>
               <button
-                onClick={handleTestCode}
+                onClick={() => runTests(code, selectedProblemId)}
                 disabled={isLoading}
-                className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 ✓ 提交测试
               </button>
             </div>
           </div>
+
+          <div className="mt-3 lg:hidden">
+            <label htmlFor="problem-select" className="mb-1 block text-sm text-gray-600 dark:text-gray-300">
+              选择题目
+            </label>
+            <select
+              id="problem-select"
+              value={selectedProblemId}
+              onChange={(event) => {
+                const id = Number(event.target.value);
+                handleSelectProblem(id);
+              }}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {problems.map((problem) => (
+                <option key={problem.id} value={problem.id}>
+                  {problem.id}. {problem.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {isResetConfirmOpen && selectedProblem && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
+              <span>确定要重置当前题目的代码吗？</span>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    resetToStarterCode();
+                    setIsResetConfirmOpen(false);
+                  }}
+                  className="rounded-md bg-amber-600 px-3 py-1 text-white hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                >
+                  确认重置
+                </button>
+                <button
+                  onClick={() => setIsResetConfirmOpen(false)}
+                  className="rounded-md border border-amber-300 px-3 py-1 hover:bg-amber-100 dark:border-amber-800 dark:hover:bg-amber-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          )}
         </header>
 
         {selectedProblem ? (
           <ProblemDetail problem={selectedProblem} />
         ) : (
           <div className="p-6 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/80 dark:border-gray-800">
-            <div className="text-sm text-gray-500 dark:text-gray-400">正在加载题目详情...</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {selectedProblemError || '正在加载题目详情...'}
+            </div>
           </div>
         )}
 
-        <div className="flex-1 flex overflow-hidden bg-slate-50/40 dark:bg-gray-900/40">
-          <div className="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-800">
+        <div className="flex-1 min-h-0 flex flex-col xl:flex-row overflow-hidden bg-slate-50/40 dark:bg-gray-900/40">
+          <div className="flex-1 min-h-[300px] xl:min-h-0 flex flex-col border-b xl:border-b-0 xl:border-r border-gray-200 dark:border-gray-800">
             <div className="px-4 py-2 bg-slate-100/80 dark:bg-gray-800/70 border-b border-gray-200 dark:border-gray-700">
               <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 代码编辑器
@@ -214,7 +182,7 @@ function App() {
             </div>
           </div>
 
-          <div className="w-1/2 flex flex-col bg-white/80 dark:bg-gray-900/70">
+          <div className="xl:w-1/2 min-h-[280px] xl:min-h-0 flex flex-col bg-white/80 dark:bg-gray-900/70">
             <ResultPanel
               executionResult={executionResult}
               testResult={testResult}

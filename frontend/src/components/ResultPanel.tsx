@@ -24,13 +24,13 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
     <div className="flex flex-col h-full bg-white/80 dark:bg-gray-900/70">
       <div className="p-3 border-b border-gray-200 dark:border-gray-800 bg-slate-50/70 dark:bg-gray-900/60">
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          ACM 输入（stdin）
+          ACM 输入
         </label>
         <textarea
           value={customInput}
           onChange={(e) => onCustomInputChange(e.target.value)}
           placeholder="例如：&#10;1 2"
-          className="w-full h-24 px-3 py-2 text-sm font-mono rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full h-24 px-3 py-2 text-sm font-mono rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         />
       </div>
 
@@ -38,7 +38,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
       <div className="flex border-b border-gray-200 dark:border-gray-800 px-2 pt-2">
         <button
           onClick={() => onTabChange('output')}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
             activeTab === 'output'
               ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -48,7 +48,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
         </button>
         <button
           onClick={() => onTabChange('tests')}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
             activeTab === 'tests'
               ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -191,8 +191,12 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
         )}
 
         {!isLoading && !executionResult && !testResult && (
-          <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
-            点击"运行"或"提交"按钮查看结果
+          <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🚀</div>
+              <p className="font-medium">准备就绪</p>
+              <p className="text-sm">点击“运行”查看输出，或点击“提交测试”检验答案</p>
+            </div>
           </div>
         )}
       </div>
