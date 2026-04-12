@@ -1,42 +1,20 @@
 import { Router, Request, Response } from 'express';
 import { dockerExecutor } from '../services/dockerExecutor';
+import { asyncHandler } from '../utils/http';
+import { validateCode, validateOptionalInput } from '../utils/validation';
 
 const router = Router();
 
-router.post('/execute', async (req: Request, res: Response) => {
-  try {
-    const { code, input } = req.body;
+router.post(
+  '/execute',
+  asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body as Record<string, unknown>;
+    const code = validateCode(body.code);
+    const input = validateOptionalInput(body.input);
 
-    if (!code || typeof code !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Code is required and must be a string'
-      });
-    }
-
-    if (code.length > 50000) {
-      return res.status(400).json({
-        success: false,
-        error: 'Code is too long (max 50KB)'
-      });
-    }
-
-    if (input !== undefined && typeof input !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Input must be a string'
-      });
-    }
-
-    const result = await dockerExecutor.execute(code, { stdin: input || '' });
+    const result = await dockerExecutor.execute(code, { stdin: input });
     res.json(result);
-  } catch (error: any) {
-    console.error('Execution error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Execution failed'
-    });
-  }
-});
+  })
+);
 
 export default router;

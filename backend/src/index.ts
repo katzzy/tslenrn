@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import executeRouter from './routes/execute';
 import testRouter from './routes/test';
+import { errorMiddleware } from './utils/http';
 
 dotenv.config();
 
@@ -19,13 +20,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.use('/api', executeRouter);
 app.use('/api', testRouter);
 
-app.use((err: Error, req: Request, res: Response, next: any) => {
-  console.error('Error:', err);
-  res.status(500).json({ 
-    success: false, 
-    error: err.message || 'Internal server error' 
-  });
-});
+app.use(errorMiddleware);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

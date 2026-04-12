@@ -12,6 +12,14 @@ interface ExecutionOptions {
   stdin?: string;
 }
 
+interface ExecutionResult {
+  success: boolean;
+  output?: string;
+  error?: string;
+  stderr?: string;
+  executionTime?: number;
+}
+
 export class DockerExecutor {
   private readonly timeout: number;
   private readonly maxOutputLength: number;
@@ -23,12 +31,7 @@ export class DockerExecutor {
     this.imageName = process.env.DOCKER_IMAGE || 'tslenrn-executor:latest';
   }
 
-  async execute(code: string, options: ExecutionOptions = {}): Promise<{
-    success: boolean;
-    output?: string;
-    error?: string;
-    executionTime?: number;
-  }> {
+  async execute(code: string, options: ExecutionOptions = {}): Promise<ExecutionResult> {
     const timeout = options.timeout || this.timeout;
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tslenrn-'));
     const codeFile = path.join(tempDir, 'code.ts');
@@ -51,44 +54,48 @@ export class DockerExecutor {
         sh -c "tsx /code.ts < /input.txt"`;
 
       try {
-        const { stdout, stderr } = await Promise.race([
-          execPromise(dockerCommand, { 
-            timeout,
-            maxBuffer: this.maxOutputLength 
-          }),
-          new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Execution timeout')), timeout)
-          )
-        ]);
+        const { stdout, stderr } = await execPromise(dockerCommand, {
+          timeout,
+          maxBuffer: this.maxOutputLength,
+        });
 
         const executionTime = Date.now() - startTime;
-        const output = (stdout + stderr).slice(0, this.maxOutputLength);
+        const output = stdout.slice(0, this.maxOutputLength);
+        const stderrOutput = stderr.slice(0, this.maxOutputLength);
 
         return {
-          success: !stderr || stderr.length === 0,
-          output: output || 'No output',
-          executionTime
+          success: true,
+          output,
+          stderr: stderrOutput || undefined,
+          executionTime,
         };
-      } catch (execError: any) {
+      } catch (execError: unknown) {
         const executionTime = Date.now() - startTime;
-        
-        if (execError.message === 'Execution timeout') {
+        const errorWithOutput = execError as Error & { stdout?: string; stderr?: string; killed?: boolean };
+        const errorText = errorWithOutput.stderr || errorWithOutput.message;
+
+        if (errorWithOutput.killed || /timeout/i.test(errorText)) {
           return {
             success: false,
             error: `Execution timeout after ${timeout}ms`,
-            executionTime
+            output: errorWithOutput.stdout?.slice(0, this.maxOutputLength),
+            executionTime,
           };
         }
 
         return {
           success: false,
-          error: execError.stderr || execError.message,
-          output: execError.stdout,
-          executionTime
+          error: errorText,
+          output: errorWithOutput.stdout?.slice(0, this.maxOutputLength),
+          executionTime,
         };
       }
     } finally {
-      await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        console.error('Failed to cleanup temp directory:', cleanupError);
+      }
     }
   }
 
