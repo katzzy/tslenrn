@@ -105,7 +105,18 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
           },
           formatOnPaste: true,
           formatOnType: true,
-          fixedOverflowWidgets: true,
+          acceptSuggestionOnEnter: 'on',
+          tabCompletion: 'on',
+          snippetSuggestions: 'inline',
+          suggest: {
+            showStatusBar: true,
+            preview: true,
+            previewMode: 'subwordSmart',
+            localityBonus: true,
+            selectionMode: 'always',
+            snippetsPreventQuickSuggestions: false,
+          },
+          fixedOverflowWidgets: false,
         }}
       />
     </div>
