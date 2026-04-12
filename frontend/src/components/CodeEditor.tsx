@@ -19,7 +19,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   onChange,
   language = 'typescript',
   path = 'solution.ts',
-  theme = 'vs-dark',
+  theme = 'vs',
   height = '100%',
 }) => {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
@@ -57,7 +57,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   return (
-    <div className="h-full w-full bg-[#1e1e1e]">
+    <div className={`h-full w-full ${theme === 'vs-dark' ? 'bg-[#1e1e1e]' : 'bg-slate-50'}`}>
       <Editor
         height={height}
         language={language}

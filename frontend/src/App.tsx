@@ -7,6 +7,10 @@ import { useCodeDraft } from './hooks/useCodeDraft';
 import { useRunner } from './hooks/useRunner';
 
 function App() {
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
+    const storedTheme = window.localStorage.getItem('theme-mode-v1');
+    return storedTheme === 'dark' ? 'dark' : 'light';
+  });
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isProblemCollapsed, setIsProblemCollapsed] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -65,6 +69,16 @@ function App() {
     setMobilePane('result');
   };
 
+  const toggleTheme = () => {
+    setThemeMode((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', themeMode === 'dark');
+    document.body.classList.toggle('dark', themeMode === 'dark');
+    window.localStorage.setItem('theme-mode-v1', themeMode);
+  }, [themeMode]);
+
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (!isDraggingRef.current || !layoutRef.current) return;
@@ -113,7 +127,7 @@ function App() {
   const hasPendingResult = !isLoading && mobilePane !== 'result' && (executionResult || testResult);
 
   return (
-    <div className="flex h-screen flex-col gap-3 bg-slate-100 p-3 dark:bg-gray-950 lg:flex-row">
+    <div className={`${themeMode === 'dark' ? 'dark' : ''} flex h-screen flex-col gap-3 bg-slate-100 p-3 dark:bg-gray-950 lg:flex-row`}>
       <div className="ios-surface min-h-0 flex flex-1 flex-col overflow-hidden">
         <header className="hidden items-center justify-between border-b border-white/75 bg-white/70 px-5 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/65 lg:flex">
           <div className="flex items-center gap-3">
@@ -130,6 +144,12 @@ function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="rounded-full border border-white/80 bg-white/85 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-white dark:border-white/10 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              {themeMode === 'dark' ? '浅色模式' : '深色模式'}
+            </button>
             <span className="ios-chip">题号 #{selectedProblemId}</span>
             {selectedProblem && <span className="ios-chip max-w-56 truncate">{selectedProblem.title}</span>}
           </div>
@@ -142,7 +162,15 @@ function App() {
               <span className="ios-toolbar-dot bg-amber-400" />
               <span className="ios-toolbar-dot bg-emerald-400" />
             </div>
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Workspace</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Workspace</span>
+              <button
+                onClick={toggleTheme}
+                className="rounded-full border border-white/80 bg-white/85 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-white dark:border-white/10 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                {themeMode === 'dark' ? '浅色' : '深色'}
+              </button>
+            </div>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -345,7 +373,7 @@ function App() {
             </div>
             <div className="flex-1 p-2">
               <div className="h-full overflow-hidden rounded-xl border border-white/70 dark:border-white/10">
-                <CodeEditor code={code} onChange={setCode} />
+                <CodeEditor code={code} onChange={setCode} theme={themeMode === 'dark' ? 'vs-dark' : 'vs'} />
               </div>
             </div>
           </div>
@@ -399,7 +427,7 @@ function App() {
             </div>
             <div className="flex-1 p-2">
               <div className="h-full overflow-hidden rounded-xl border border-white/70 dark:border-white/10">
-                <CodeEditor code={code} onChange={setCode} />
+                <CodeEditor code={code} onChange={setCode} theme={themeMode === 'dark' ? 'vs-dark' : 'vs'} />
               </div>
             </div>
           </div>
