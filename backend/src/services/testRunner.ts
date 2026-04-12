@@ -1,5 +1,6 @@
 import { dockerExecutor } from './dockerExecutor';
 import type { Problem, TestCase } from '../types/problem';
+import { ExecutionFailure } from '../types/execution';
 
 export interface SingleTestResult {
   passed: boolean;
@@ -48,13 +49,21 @@ const runWithConcurrency = async <T, R>(
 };
 
 const runSingleCase = async (code: string, testCase: TestCase): Promise<SingleTestResult> => {
-  const execution = await dockerExecutor.execute(code, { stdin: testCase.input });
   const expected = normalizeOutput(testCase.expectedOutput);
-  const actualSource = execution.success
-    ? (execution.output ?? '')
-    : (execution.error ?? execution.output ?? '');
-  const actual = normalizeOutput(actualSource);
-  const passed = execution.success && actual === expected;
+  let actual = '';
+  let passed = false;
+
+  try {
+    const execution = await dockerExecutor.execute(code, { stdin: testCase.input });
+    actual = normalizeOutput(execution.output);
+    passed = actual === expected;
+  } catch (error: unknown) {
+    if (error instanceof ExecutionFailure) {
+      actual = normalizeOutput(error.output ?? error.message);
+    } else {
+      throw error;
+    }
+  }
 
   return {
     passed,

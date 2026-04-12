@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { dockerExecutor } from '../services/dockerExecutor';
+import { executeUserCode } from '../services/executionService';
 import { asyncHandler } from '../utils/http';
 import { validateCode, validateOptionalInput } from '../utils/validation';
 
@@ -12,7 +12,7 @@ router.post(
     const code = validateCode(body.code);
     const input = validateOptionalInput(body.input);
 
-    const result = await dockerExecutor.execute(code, { stdin: input });
+    const result = await executeUserCode(code, input);
     res.json(result);
   })
 );
