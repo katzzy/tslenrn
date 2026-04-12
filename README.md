@@ -1,21 +1,21 @@
 # TypeScript ACM 练习平台
 
-一个基于 React + Express 的在线 TypeScript 刷题平台，采用 **ACM 输入输出模式（stdin/stdout）**，支持在线运行与自动判题。
+一个基于 React + Express 的在线 TypeScript 刷题平台，采用 **ACM 输入输出模式**，支持在线运行与自动判题。
 
 ## 功能
 
 - 30 道 ACM 风格题目（easy / medium）
 - Monaco 编辑器（TypeScript 语法与类型提示）
-- 在线运行（自定义 stdin）
+- 在线运行（自定义输入）
 - 自动评测（公开 + 隐藏测试用例）
 - Docker 隔离执行（限制网络、内存、CPU、进程数）
 - 代码自动本地保存（按题目缓存）
 
 ## 技术栈
 
-- **Frontend**: React 18, TypeScript, Vite, TailwindCSS, Monaco
+- **Frontend**: React 19, TypeScript, Vite, TailwindCSS, Monaco
 - **Backend**: Node.js, Express, TypeScript
-- **Execution**: Docker (`tslenrn-executor:latest`)
+- **Execution**: Docker (`tslenrn-executor:latest`) + `esbuild` 编译 + `node` 执行
 
 ## 运行要求
 
@@ -84,17 +84,25 @@ cd frontend && npm run dev
 
 1. 在左侧选择题目
 2. 在中间编辑 TypeScript 代码（从 `stdin` 读入）
-3. 在右侧填写 **ACM 输入（stdin）**
+3. 在右侧填写 **ACM 输入**
 4. 点击 **运行** 查看输出，或 **提交测试** 执行判题
 
 示例读取模板：
 
 ```ts
 import * as fs from 'fs';
-const input = fs.readFileSync(0, 'utf8').trim();
-const tokens = input.length ? input.split(/\s+/) : [];
+const input = fs.readFileSync(0, 'utf8');
+const tokens = input.match(/\S+/g) ?? [];
 let idx = 0;
-const next = () => tokens[idx++];
+const next = (): string => tokens[idx++] ?? '';
+const nextNum = (): number => Number(next());
+
+const out: string[] = [];
+const print = (...values: Array<string | number | bigint>): void => {
+  out.push(values.join(' '));
+};
+
+process.stdout.write(out.join('\n'));
 ```
 
 ## API 概览
@@ -113,15 +121,19 @@ const next = () => tokens[idx++];
 tslenrn/
 ├── frontend/
 │   ├── src/components/    # 页面组件（题目列表、题面、编辑器、结果面板）
+│   ├── src/hooks/         # 业务 Hook（题目、草稿、运行）
+│   ├── src/editor/        # 编辑器相关配置（如 Node typings）
 │   ├── src/utils/api.ts   # 前端 API 调用
-│   └── src/types/         # 前端类型定义
+│   └── src/types/         # 前端类型映射（复用 shared 契约）
 ├── backend/
 │   ├── src/problems/      # 题库与测试样例（唯一数据源）
 │   ├── src/routes/        # execute/test/problems 接口
-│   ├── src/services/      # Docker 执行器
+│   ├── src/services/      # 执行器、题库服务、判题服务
+│   ├── src/utils/         # HTTP 错误与参数校验
 │   ├── Dockerfile         # 执行镜像定义
 │   └── build-docker.sh    # 镜像构建脚本
 └── shared/
+    └── types.ts           # 共享类型契约
 ```
 
 ## 常见问题
@@ -141,3 +153,7 @@ tslenrn/
 
 - 统一在 `backend/src/problems/index.ts`
 - 修改后重启后端生效
+
+### 4) 快速检查当前代码状态
+
+- 运行 `./verify.sh` 查看关键文件与依赖检查结果
