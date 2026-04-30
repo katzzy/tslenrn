@@ -1,5 +1,12 @@
 import axios from 'axios';
-import type { ExecutionResult, ExecutorMode, TestResult, Problem, ProblemSummary } from '../types/index';
+import type {
+  ExecutionResult,
+  ExecutorCapabilities,
+  ExecutorMode,
+  TestResult,
+  Problem,
+  ProblemSummary,
+} from '../types/index';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -43,6 +50,11 @@ export const getProblems = async (): Promise<ProblemSummary[]> => {
 
 export const getProblem = async (id: number): Promise<Problem> => {
   const response = await api.get(`/problems/${id}`);
+  return response.data;
+};
+
+export const getExecutorCapabilities = async (): Promise<ExecutorCapabilities> => {
+  const response = await api.get<ExecutorCapabilities>('/executor/capabilities');
   return response.data;
 };
 

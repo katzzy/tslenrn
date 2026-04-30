@@ -7,16 +7,19 @@ export interface ExecutionOutput {
 interface ExecutionFailureOptions {
   output?: string;
   executionTime?: number;
+  code?: string;
 }
 
 export class ExecutionFailure extends Error {
   readonly output?: string;
   readonly executionTime?: number;
+  readonly code: string;
 
   constructor(message: string, options: ExecutionFailureOptions = {}) {
     super(message);
     this.name = 'ExecutionFailure';
     this.output = options.output;
     this.executionTime = options.executionTime;
+    this.code = options.code ?? 'EXECUTION_FAILED';
   }
 }

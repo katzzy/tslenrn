@@ -1,4 +1,5 @@
 import type {
+  ExecutorCapabilities,
   ExecutorMode,
   ExecutionResult,
   Problem as SharedProblem,
@@ -8,7 +9,15 @@ import type {
   TestResult,
 } from '../../../shared/types';
 
-export type { ExecutorMode, ExecutionResult, ProblemSummary, SingleTestResult, TestCase, TestResult };
+export type {
+  ExecutorCapabilities,
+  ExecutorMode,
+  ExecutionResult,
+  ProblemSummary,
+  SingleTestResult,
+  TestCase,
+  TestResult,
+};
 
 // Problem detail may be returned before test cases are attached in some UI paths.
 export type Problem = Omit<SharedProblem, 'testCases'> & {

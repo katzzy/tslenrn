@@ -40,6 +40,7 @@ function App() {
     activeTab,
     setActiveTab,
     executorMode,
+    executorBadgeLabel,
     toggleExecutorMode,
     runCode,
     runTests,
@@ -186,6 +187,7 @@ function App() {
             onRun={handleRunCode}
             onTest={handleRunTests}
             executorMode={executorMode}
+            executorBadgeLabel={executorBadgeLabel}
             onToggleExecutorMode={toggleExecutorMode}
             onReset={resetToStarterCode}
             isLoading={isLoading}
@@ -212,6 +214,7 @@ function App() {
             customInput={customInput}
             onCustomInputChange={setCustomInput}
             executorMode={executorMode}
+            executorBadgeLabel={executorBadgeLabel}
             onToggleExecutorMode={toggleExecutorMode}
             activeTab={activeTab}
             onTabChange={setActiveTab}

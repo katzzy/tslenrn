@@ -2,11 +2,13 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 
 export class HttpError extends Error {
   readonly statusCode: number;
+  readonly code: string;
 
-  constructor(statusCode: number, message: string) {
+  constructor(statusCode: number, message: string, code = 'HTTP_ERROR') {
     super(message);
     this.name = 'HttpError';
     this.statusCode = statusCode;
+    this.code = code;
   }
 }
 
@@ -23,6 +25,7 @@ export const errorMiddleware = (err: unknown, _req: Request, res: Response, _nex
     res.status(err.statusCode).json({
       success: false,
       error: err.message,
+      errorCode: err.code,
     });
     return;
   }
@@ -32,5 +35,6 @@ export const errorMiddleware = (err: unknown, _req: Request, res: Response, _nex
   res.status(500).json({
     success: false,
     error: message,
+    errorCode: 'INTERNAL_SERVER_ERROR',
   });
 };

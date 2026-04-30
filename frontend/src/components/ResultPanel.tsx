@@ -10,6 +10,7 @@ interface ResultPanelProps {
   customInput: string;
   onCustomInputChange: (value: string) => void;
   executorMode: ExecutorMode;
+  executorBadgeLabel?: string;
   onToggleExecutorMode: () => void;
   activeTab: 'output' | 'tests';
   onTabChange: (tab: 'output' | 'tests') => void;
@@ -22,6 +23,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   customInput,
   onCustomInputChange,
   executorMode,
+  executorBadgeLabel,
   onToggleExecutorMode,
   activeTab,
   onTabChange,
@@ -45,6 +47,9 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
             {modeLabel}
           </button>
         </div>
+        {executorBadgeLabel && (
+          <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">{executorBadgeLabel}</div>
+        )}
 
         <div>
           <label className="mb-1 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">

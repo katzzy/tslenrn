@@ -6,6 +6,7 @@ interface ExecuteResponse {
   success: boolean;
   output?: string;
   error?: string;
+  errorCode?: string;
   executionTime?: number;
 }
 
@@ -27,6 +28,7 @@ export const executeUserCode = async (
         success: false,
         output: error.output,
         error: error.message,
+        errorCode: error.code,
         executionTime: error.executionTime,
       };
     }

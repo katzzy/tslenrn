@@ -131,6 +131,7 @@ process.stdout.write(out.join('\n'));
 - `GET /api/problems`：题目列表
 - `GET /api/problems/stats`：题库分布统计（难度/路径/模块）
 - `GET /api/problems/:id`：题目详情（含公开测试信息）
+- `GET /api/executor/capabilities`：执行器能力（默认模式、Docker 可用性、本地回退策略）
 - `POST /api/execute`：运行代码
   - body: `{ code: string, input?: string, executorMode?: 'docker' | 'local' | 'auto' }`
 - `POST /api/test`：判题
@@ -145,7 +146,7 @@ tslenrn/
 │   ├── src/hooks/         # 业务 Hook（题目、草稿、运行）
 │   ├── src/editor/        # 编辑器相关配置（如 Node typings）
 │   ├── src/utils/api.ts   # 前端 API 调用
-│   └── src/types/         # 前端类型映射（复用 shared 契约）
+│   └── src/types/         # 前端类型映射（统一复用 shared 契约）
 ├── backend/
 │   ├── src/problems/      # 题库与测试样例（唯一数据源）
 │   ├── src/routes/        # execute/test/problems 接口
@@ -154,7 +155,7 @@ tslenrn/
 │   ├── Dockerfile         # 执行镜像定义
 │   └── build-docker.sh    # 镜像构建脚本
 └── shared/
-    └── types.ts           # 共享类型契约
+    └── types.ts           # 前后端共享契约（类型与 API 响应结构）
 ```
 
 ## 常见问题

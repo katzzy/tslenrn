@@ -1,9 +1,18 @@
 import { Router, Request, Response } from 'express';
 import { executeUserCode } from '../services/executionService';
+import { dockerExecutor } from '../services/dockerExecutor';
 import { asyncHandler } from '../utils/http';
 import { validateCode, validateOptionalExecutorMode, validateOptionalInput } from '../utils/validation';
 
 const router = Router();
+
+router.get(
+  '/executor/capabilities',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const capabilities = await dockerExecutor.getCapabilities();
+    res.json(capabilities);
+  })
+);
 
 router.post(
   '/execute',

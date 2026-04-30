@@ -20,6 +20,7 @@ interface MobileWorkspaceProps {
   customInput: string;
   onCustomInputChange: (value: string) => void;
   executorMode: ExecutorMode;
+  executorBadgeLabel?: string;
   onToggleExecutorMode: () => void;
   activeTab: 'output' | 'tests';
   onTabChange: (tab: 'output' | 'tests') => void;
@@ -40,6 +41,7 @@ const MobileWorkspace = ({
   customInput,
   onCustomInputChange,
   executorMode,
+  executorBadgeLabel,
   onToggleExecutorMode,
   activeTab,
   onTabChange,
@@ -79,6 +81,7 @@ const MobileWorkspace = ({
         customInput={customInput}
         onCustomInputChange={onCustomInputChange}
         executorMode={executorMode}
+        executorBadgeLabel={executorBadgeLabel}
         onToggleExecutorMode={onToggleExecutorMode}
         activeTab={activeTab}
         onTabChange={onTabChange}

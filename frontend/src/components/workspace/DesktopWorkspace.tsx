@@ -31,6 +31,7 @@ interface DesktopWorkspaceProps {
   onRun: () => void;
   onTest: () => void;
   executorMode: ExecutorMode;
+  executorBadgeLabel?: string;
   onToggleExecutorMode: () => void;
   onReset: () => void;
   isLoading: boolean;
@@ -61,6 +62,7 @@ const DesktopWorkspace = ({
   onRun,
   onTest,
   executorMode,
+  executorBadgeLabel,
   onToggleExecutorMode,
   onReset,
   isLoading,
@@ -142,6 +144,7 @@ const DesktopWorkspace = ({
         customInput={customInput}
         onCustomInputChange={onCustomInputChange}
         executorMode={executorMode}
+        executorBadgeLabel={executorBadgeLabel}
         onToggleExecutorMode={onToggleExecutorMode}
         activeTab={activeTab}
         onTabChange={onTabChange}

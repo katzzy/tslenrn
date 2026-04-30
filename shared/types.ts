@@ -42,6 +42,12 @@ export interface ProblemBankStats {
   module: Record<LearningModule, number>;
 }
 
+export interface ExecutorCapabilities {
+  defaultMode: ExecutorMode;
+  dockerAvailable: boolean;
+  allowUnsafeLocalFallback: boolean;
+}
+
 export interface TestCase {
   input: string;
   expectedOutput: string;
@@ -59,6 +65,7 @@ export interface ExecutionResult {
   success: boolean;
   output?: string;
   error?: string;
+  errorCode?: string;
   executionTime?: number;
 }
 
@@ -74,6 +81,7 @@ export interface TestResult {
   total: number;
   results: SingleTestResult[];
   error?: string;
+  errorCode?: string;
 }
 
 export interface SingleTestResult {

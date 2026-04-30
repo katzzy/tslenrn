@@ -58,3 +58,16 @@ test('getProblemBankStats aggregates difficulty and learning dimensions', () => 
     problems.length
   );
 });
+
+test('problem bank has broad tag coverage and no duplicate ids', () => {
+  const allTags = new Set<string>();
+  const ids = new Set<number>();
+
+  for (const problem of problems) {
+    problem.learning.tags.forEach((tag) => allTags.add(tag));
+    ids.add(problem.id);
+  }
+
+  assert.equal(ids.size, problems.length);
+  assert.ok(allTags.size >= 10);
+});

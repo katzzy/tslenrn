@@ -1,11 +1,22 @@
-export const getErrorMessage = (error: unknown, fallback: string): string => {
+export interface ParsedApiError {
+  message: string;
+  code?: string;
+}
+
+export const parseApiError = (error: unknown, fallback: string): ParsedApiError => {
   if (typeof error === 'object' && error !== null) {
     const maybeError = error as {
-      response?: { data?: { error?: string } };
+      response?: { data?: { error?: string; errorCode?: string } };
       message?: string;
     };
-    return maybeError.response?.data?.error || maybeError.message || fallback;
+    return {
+      message: maybeError.response?.data?.error || maybeError.message || fallback,
+      code: maybeError.response?.data?.errorCode,
+    };
   }
 
-  return fallback;
+  return { message: fallback };
 };
+
+export const getErrorMessage = (error: unknown, fallback: string): string =>
+  parseApiError(error, fallback).message;

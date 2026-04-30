@@ -25,6 +25,7 @@ app.use(errorMiddleware);
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📝 API endpoints:`);
+  console.log(`   GET  /api/executor/capabilities - Executor capabilities`);
   console.log(`   POST /api/execute - Run code`);
   console.log(`   POST /api/test - Test code against problem`);
 });

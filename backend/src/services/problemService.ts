@@ -50,7 +50,7 @@ export const getProblemBankStats = (): ProblemBankStats => {
 export const getProblemByIdOrThrow = (problemId: number): Problem => {
   const problem = problems.find((item) => item.id === problemId);
   if (!problem) {
-    throw new HttpError(404, 'Problem not found');
+    throw new HttpError(404, 'Problem not found', 'PROBLEM_NOT_FOUND');
   }
   return problem;
 };
