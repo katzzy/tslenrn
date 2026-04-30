@@ -16,22 +16,20 @@
 
 - **Frontend**: React 19, TypeScript, Vite, TailwindCSS, Monaco
 - **Backend**: Node.js, Express, TypeScript
-- **Execution**: Docker (`tslenrn-executor:latest`) + `esbuild` 编译 + `node` 执行
+- **Execution**: 默认 Docker 隔离执行（`tslenrn-executor:latest`），无 Docker 时可切换本地执行（不隔离）
 
 ## 运行要求
 
 - Node.js 18+
 - npm
-- Docker（运行/判题必需）
+- Docker（推荐，用于隔离执行）
 
 ## 快速开始
 
 ### 1. 安装依赖
 
 ```bash
-npm install
-cd frontend && npm install
-cd ../backend && npm install
+npm install --workspaces --include-workspace-root
 ```
 
 ### 2. 配置环境变量
@@ -47,9 +45,18 @@ cp .env.example .env
 PORT=3000
 NODE_ENV=development
 DOCKER_IMAGE=tslenrn-executor:latest
+EXECUTOR_MODE=auto
+ALLOW_UNSAFE_LOCAL_EXECUTION=true
 EXECUTION_TIMEOUT=5000
 MAX_OUTPUT_LENGTH=10000
 ```
+
+执行模式说明：
+
+- `EXECUTOR_MODE=auto`：优先 Docker，不可用时回退本地执行
+- `EXECUTOR_MODE=docker`：强制 Docker（不可用时报错）
+- `EXECUTOR_MODE=local`：强制本地执行（无容器隔离）
+- `ALLOW_UNSAFE_LOCAL_EXECUTION=false`：禁用本地回退（Docker 不可用时直接报错）
 
 ### 3. 构建执行镜像
 
@@ -154,6 +161,7 @@ tslenrn/
 - 检查 Docker 是否可用：`docker run --rm node:18-alpine node -v`
 - 确认执行镜像已构建：`cd backend && ./build-docker.sh`
 - 如需更长运行时间，调大 `backend/.env` 的 `EXECUTION_TIMEOUT`
+- 若本机无 Docker，可使用本地回退执行（`EXECUTOR_MODE=auto/local`），但安全性低于容器隔离
 
 ### 2) 判题结果和本地运行不一致
 

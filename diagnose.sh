@@ -1,24 +1,41 @@
 #!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FRONTEND_DIR="${SCRIPT_DIR}/frontend"
+FRONTEND_PORT="${FRONTEND_PORT:-5173}"
 
 echo "=== 前端诊断 ==="
 echo ""
 
 echo "1. 检查前端进程："
-ps aux | grep "[n]ode.*vite" || echo "  ❌ 前端未运行"
+ps aux | grep "[v]ite" || echo "  ❌ 前端未运行"
 
 echo ""
 echo "2. 检查端口："
-curl -s http://localhost:5174 > /dev/null && echo "  ✅ 5174端口可访问" || echo "  ❌ 5174端口无法访问"
+if curl -s "http://localhost:${FRONTEND_PORT}" > /dev/null; then
+  echo "  ✅ ${FRONTEND_PORT} 端口可访问"
+else
+  echo "  ❌ ${FRONTEND_PORT} 端口无法访问"
+fi
 
 echo ""
-echo "3. 检查TypeScript编译："
-cd frontend && npx tsc --noEmit && echo "  ✅ 无编译错误" || echo "  ❌ 有编译错误"
+echo "3. 检查 TypeScript 编译："
+if (cd "${FRONTEND_DIR}" && npx tsc --noEmit); then
+  echo "  ✅ 无编译错误"
+else
+  echo "  ❌ 有编译错误"
+fi
 
 echo ""
 echo "4. 检查依赖："
-cd /home/korbin/projects/tslenrn/frontend
+cd "${FRONTEND_DIR}"
 for pkg in react react-dom @monaco-editor/react axios; do
-  npm list $pkg 2>/dev/null | grep $pkg && echo "  ✅ $pkg" || echo "  ❌ $pkg 缺失"
+  if npm list "$pkg" >/dev/null 2>&1; then
+    echo "  ✅ ${pkg}"
+  else
+    echo "  ❌ ${pkg} 缺失"
+  fi
 done
 
 echo ""

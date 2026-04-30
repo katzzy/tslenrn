@@ -1,4 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
 
 echo "🔍 TypeScript Learning Platform - Verification Report"
 echo "======================================================"
@@ -59,11 +63,21 @@ if [ -d "frontend/node_modules" ]; then echo "  ✅ Frontend dependencies instal
 if [ -d "backend/node_modules" ]; then echo "  ✅ Backend dependencies installed"; else echo "  ⚠️  Backend dependencies missing"; fi
 echo ""
 
+# Runtime checks
+echo "🌐 Runtime Checks:"
+if curl -s --max-time 2 http://localhost:3000/api/health > /dev/null; then
+  API_STATUS="✅ Reachable (GET /api/health)"
+else
+  API_STATUS="⚠️  Not reachable (start backend to verify endpoints)"
+fi
+echo "  ${API_STATUS}"
+echo ""
+
 # Summary
 echo "📊 Project Status:"
 echo "  Core features: ✅ Implemented"
 echo "  UI Components: ✅ Complete"
-echo "  API Endpoints: ✅ Functional"
+echo "  API Endpoints: ${API_STATUS}"
 echo "  Documentation: ✅ Comprehensive"
 echo ""
 echo "🎯 Next Steps:"
