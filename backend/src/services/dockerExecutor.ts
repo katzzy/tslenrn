@@ -5,14 +5,15 @@ import * as os from 'os';
 import type { Diagnostic } from 'typescript';
 import { ExecutionFailure } from '../types/execution';
 import type { ExecutionOutput } from '../types/execution';
+import type { ExecutorMode } from '../types/executor';
 
 type TypeScriptModule = typeof import('typescript');
-type ExecutorMode = 'auto' | 'docker' | 'local';
 
 interface ExecutionOptions {
   timeout?: number;
   maxOutputLength?: number;
   stdin?: string;
+  executorMode?: ExecutorMode;
 }
 
 interface ProcessResult {
@@ -247,9 +248,10 @@ export class DockerExecutor {
     stdin: string,
     tempDir: string,
     timeout: number,
-    maxOutputLength: number
+    maxOutputLength: number,
+    forceLocalByRequest = false
   ): Promise<ExecutionOutput> {
-    if (!this.allowUnsafeLocalExecution) {
+    if (!this.allowUnsafeLocalExecution && !forceLocalByRequest) {
       throw new ExecutionFailure(
         'Docker is unavailable and local execution fallback is disabled (set ALLOW_UNSAFE_LOCAL_EXECUTION=true to opt in).'
       );
@@ -278,15 +280,17 @@ export class DockerExecutor {
     };
   }
 
-  private async resolveExecutionMode(): Promise<'docker' | 'local'> {
-    if (this.executorMode === 'docker') {
+  private async resolveExecutionMode(overrideMode?: ExecutorMode): Promise<'docker' | 'local'> {
+    const selectedMode = overrideMode ?? this.executorMode;
+
+    if (selectedMode === 'docker') {
       if (!(await this.isDockerAvailable())) {
         throw new ExecutionFailure('Executor mode is docker but Docker is unavailable.');
       }
       return 'docker';
     }
 
-    if (this.executorMode === 'local') {
+    if (selectedMode === 'local') {
       return 'local';
     }
     const dockerAvailable = await this.isDockerAvailable();
@@ -306,11 +310,18 @@ export class DockerExecutor {
       await fs.writeFile(inputFile, stdin);
 
       const startTime = Date.now();
-      const mode = await this.resolveExecutionMode();
+      const mode = await this.resolveExecutionMode(options.executorMode);
       const result =
         mode === 'docker'
           ? await this.executeInDocker(codeFile, inputFile, timeout, maxOutputLength)
-          : await this.executeLocally(code, stdin, tempDir, timeout, maxOutputLength);
+          : await this.executeLocally(
+              code,
+              stdin,
+              tempDir,
+              timeout,
+              maxOutputLength,
+              options.executorMode === 'local'
+            );
 
       return {
         ...result,

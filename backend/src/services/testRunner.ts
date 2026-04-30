@@ -1,6 +1,7 @@
 import { dockerExecutor } from './dockerExecutor';
 import type { Problem, TestCase } from '../types/problem';
 import { ExecutionFailure } from '../types/execution';
+import type { ExecutorMode } from '../types/executor';
 
 export interface SingleTestResult {
   passed: boolean;
@@ -48,13 +49,17 @@ const runWithConcurrency = async <T, R>(
   return results;
 };
 
-const runSingleCase = async (code: string, testCase: TestCase): Promise<SingleTestResult> => {
+const runSingleCase = async (
+  code: string,
+  testCase: TestCase,
+  executorMode?: ExecutorMode
+): Promise<SingleTestResult> => {
   const expected = normalizeOutput(testCase.expectedOutput);
   let actual = '';
   let passed = false;
 
   try {
-    const execution = await dockerExecutor.execute(code, { stdin: testCase.input });
+    const execution = await dockerExecutor.execute(code, { stdin: testCase.input, executorMode });
     actual = normalizeOutput(execution.output);
     passed = actual === expected;
   } catch (error: unknown) {
@@ -74,9 +79,9 @@ const runSingleCase = async (code: string, testCase: TestCase): Promise<SingleTe
   };
 };
 
-export const runProblemTests = async (code: string, problem: Problem) => {
+export const runProblemTests = async (code: string, problem: Problem, executorMode?: ExecutorMode) => {
   const results = await runWithConcurrency(problem.testCases, parseConcurrency(), (testCase) =>
-    runSingleCase(code, testCase)
+    runSingleCase(code, testCase, executorMode)
   );
   const passed = results.reduce((count, result) => count + (result.passed ? 1 : 0), 0);
 

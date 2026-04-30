@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   validateCode,
+  validateOptionalExecutorMode,
   validateOptionalInput,
   validateProblemId,
   validateProblemIdParam,
@@ -50,6 +51,23 @@ test('validateProblemIdParam parses string integer', () => {
 
 test('validateProblemIdParam rejects invalid string', () => {
   assert.throws(() => validateProblemIdParam('abc'), (error: unknown) => {
+    assert.ok(error instanceof HttpError);
+    assert.equal(error.statusCode, 400);
+    return true;
+  });
+});
+
+test('validateOptionalExecutorMode accepts docker and local', () => {
+  assert.equal(validateOptionalExecutorMode('docker'), 'docker');
+  assert.equal(validateOptionalExecutorMode('local'), 'local');
+});
+
+test('validateOptionalExecutorMode accepts undefined', () => {
+  assert.equal(validateOptionalExecutorMode(undefined), undefined);
+});
+
+test('validateOptionalExecutorMode rejects invalid mode', () => {
+  assert.throws(() => validateOptionalExecutorMode('remote'), (error: unknown) => {
     assert.ok(error instanceof HttpError);
     assert.equal(error.statusCode, 400);
     return true;

@@ -1,4 +1,5 @@
 import { HttpError } from './http';
+import type { ExecutorMode } from '../types/executor';
 
 const MAX_CODE_LENGTH = 50_000;
 
@@ -43,4 +44,16 @@ export const validateProblemIdParam = (raw: string | string[]): number => {
   }
 
   return id;
+};
+
+export const validateOptionalExecutorMode = (value: unknown): ExecutorMode | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === 'auto' || value === 'docker' || value === 'local') {
+    return value;
+  }
+
+  throw new HttpError(400, 'Executor mode must be one of: auto, docker, local');
 };

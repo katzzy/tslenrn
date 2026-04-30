@@ -39,6 +39,8 @@ function App() {
     setCustomInput,
     activeTab,
     setActiveTab,
+    executorMode,
+    toggleExecutorMode,
     runCode,
     runTests,
     resetForProblemChange,
@@ -183,6 +185,8 @@ function App() {
             themeMode={themeMode}
             onRun={handleRunCode}
             onTest={handleRunTests}
+            executorMode={executorMode}
+            onToggleExecutorMode={toggleExecutorMode}
             onReset={resetToStarterCode}
             isLoading={isLoading}
             executionResult={executionResult}
@@ -207,6 +211,8 @@ function App() {
             isLoading={isLoading}
             customInput={customInput}
             onCustomInputChange={setCustomInput}
+            executorMode={executorMode}
+            onToggleExecutorMode={toggleExecutorMode}
             activeTab={activeTab}
             onTabChange={setActiveTab}
           />

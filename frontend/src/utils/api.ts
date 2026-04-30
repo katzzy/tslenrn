@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ExecutionResult, TestResult, Problem, ProblemSummary } from '../types/index';
+import type { ExecutionResult, ExecutorMode, TestResult, Problem, ProblemSummary } from '../types/index';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -10,13 +10,29 @@ const api = axios.create({
   },
 });
 
-export const executeCode = async (code: string, input = ''): Promise<ExecutionResult> => {
-  const response = await api.post<ExecutionResult>('/execute', { code, input });
+export const executeCode = async (
+  code: string,
+  input = '',
+  executorMode?: ExecutorMode
+): Promise<ExecutionResult> => {
+  const payload: { code: string; input: string; executorMode?: ExecutorMode } = { code, input };
+  if (executorMode) {
+    payload.executorMode = executorMode;
+  }
+  const response = await api.post<ExecutionResult>('/execute', payload);
   return response.data;
 };
 
-export const testCode = async (code: string, problemId: number): Promise<TestResult> => {
-  const response = await api.post<TestResult>('/test', { code, problemId });
+export const testCode = async (
+  code: string,
+  problemId: number,
+  executorMode?: ExecutorMode
+): Promise<TestResult> => {
+  const payload: { code: string; problemId: number; executorMode?: ExecutorMode } = { code, problemId };
+  if (executorMode) {
+    payload.executorMode = executorMode;
+  }
+  const response = await api.post<TestResult>('/test', payload);
   return response.data;
 };
 

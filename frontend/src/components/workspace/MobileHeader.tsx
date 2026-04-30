@@ -59,12 +59,7 @@ const MobileHeader = ({
   onCancelReset,
 }: MobileHeaderProps) => (
   <header className="sticky top-0 z-20 border-b border-white/80 bg-white/75 px-6 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70 lg:hidden">
-    <div className="mb-3 flex items-center justify-between">
-      <div className="flex items-center gap-1.5">
-        <span className="ios-toolbar-dot bg-red-400" />
-        <span className="ios-toolbar-dot bg-amber-400" />
-        <span className="ios-toolbar-dot bg-emerald-400" />
-      </div>
+    <div className="mb-3 flex items-center justify-end">
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Workspace</span>
         <ThemeToggle themeMode={themeMode} onToggle={onToggleTheme} compact />

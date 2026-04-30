@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { executeCode, testCode } from '../utils/api';
 import { getErrorMessage } from '../utils/errors';
-import type { ExecutionResult, TestResult } from '../types/index';
+import type { ExecutionResult, ExecutorMode, TestResult } from '../types/index';
 
 export function useRunner() {
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
@@ -9,6 +9,28 @@ export function useRunner() {
   const [isLoading, setIsLoading] = useState(false);
   const [customInput, setCustomInput] = useState('');
   const [activeTab, setActiveTab] = useState<'output' | 'tests'>('output');
+  const [executorMode, setExecutorMode] = useState<ExecutorMode>('auto');
+
+  const toggleExecutorMode = () => {
+    setExecutorMode((prev) => {
+      if (prev === 'auto') return 'docker';
+      if (prev === 'docker') return 'local';
+      return 'auto';
+    });
+  };
+
+  const getExecutorModeForRequest = (): ExecutorMode | undefined =>
+    executorMode === 'auto' ? undefined : executorMode;
+
+  const withDockerHint = (message: string): string => {
+    if (executorMode !== 'docker') {
+      return message;
+    }
+    if (!/docker/i.test(message)) {
+      return message;
+    }
+    return `${message}。当前选择了 Docker 判题，请先启动 Docker，或切换到本地/自动判题。`;
+  };
 
   const runCode = async (code: string, input: string) => {
     setIsLoading(true);
@@ -17,12 +39,12 @@ export function useRunner() {
     setTestResult(null);
 
     try {
-      const result = await executeCode(code, input);
+      const result = await executeCode(code, input, getExecutorModeForRequest());
       setExecutionResult(result);
     } catch (error: unknown) {
       setExecutionResult({
         success: false,
-        error: getErrorMessage(error, '执行失败'),
+        error: withDockerHint(getErrorMessage(error, '执行失败')),
       });
     } finally {
       setIsLoading(false);
@@ -36,7 +58,7 @@ export function useRunner() {
     setTestResult(null);
 
     try {
-      const result = await testCode(code, problemId);
+      const result = await testCode(code, problemId, getExecutorModeForRequest());
       setTestResult(result);
     } catch (error: unknown) {
       setTestResult({
@@ -44,7 +66,7 @@ export function useRunner() {
         passed: 0,
         total: 0,
         results: [],
-        error: getErrorMessage(error, '测试失败'),
+        error: withDockerHint(getErrorMessage(error, '测试失败')),
       });
     } finally {
       setIsLoading(false);
@@ -65,6 +87,8 @@ export function useRunner() {
     setCustomInput,
     activeTab,
     setActiveTab,
+    executorMode,
+    toggleExecutorMode,
     runCode,
     runTests,
     resetForProblemChange,

@@ -7,7 +7,12 @@ import {
 } from '../services/problemService';
 import { runProblemTests } from '../services/testRunner';
 import { asyncHandler } from '../utils/http';
-import { validateCode, validateProblemId, validateProblemIdParam } from '../utils/validation';
+import {
+  validateCode,
+  validateOptionalExecutorMode,
+  validateProblemId,
+  validateProblemIdParam,
+} from '../utils/validation';
 
 const router = Router();
 
@@ -31,8 +36,9 @@ router.post(
     const body = req.body as Record<string, unknown>;
     const code = validateCode(body.code);
     const problemId = validateProblemId(body.problemId);
+    const executorMode = validateOptionalExecutorMode(body.executorMode);
     const problem = getProblemByIdOrThrow(problemId);
-    const result = await runProblemTests(code, problem);
+    const result = await runProblemTests(code, problem, executorMode);
 
     res.json(result);
   })

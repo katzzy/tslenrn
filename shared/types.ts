@@ -1,4 +1,5 @@
 export type ProblemDifficulty = 'easy' | 'medium' | 'hard';
+export type ExecutorMode = 'auto' | 'docker' | 'local';
 export type LearningTrack = 'core' | 'reinforcement' | 'challenge';
 export type LearningModule =
   | 'ts-foundation'
@@ -49,7 +50,9 @@ export interface TestCase {
 
 export interface ExecutionRequest {
   code: string;
+  input?: string;
   problemId?: number;
+  executorMode?: ExecutorMode;
 }
 
 export interface ExecutionResult {
@@ -62,6 +65,7 @@ export interface ExecutionResult {
 export interface TestRequest {
   code: string;
   problemId: number;
+  executorMode?: ExecutorMode;
 }
 
 export interface TestResult {

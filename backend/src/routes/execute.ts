@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { executeUserCode } from '../services/executionService';
 import { asyncHandler } from '../utils/http';
-import { validateCode, validateOptionalInput } from '../utils/validation';
+import { validateCode, validateOptionalExecutorMode, validateOptionalInput } from '../utils/validation';
 
 const router = Router();
 
@@ -11,8 +11,9 @@ router.post(
     const body = req.body as Record<string, unknown>;
     const code = validateCode(body.code);
     const input = validateOptionalInput(body.input);
+    const executorMode = validateOptionalExecutorMode(body.executorMode);
 
-    const result = await executeUserCode(code, input);
+    const result = await executeUserCode(code, input, executorMode);
     res.json(result);
   })
 );

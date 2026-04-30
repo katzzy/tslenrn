@@ -1,7 +1,7 @@
 import ProblemDetail from '../ProblemDetail';
 import ResultPanel from '../ResultPanel';
 import EditorPane from './EditorPane';
-import type { ExecutionResult, Problem, TestResult } from '../../types';
+import type { ExecutionResult, ExecutorMode, Problem, TestResult } from '../../types';
 import type { ThemeMode } from '../../hooks/useThemeMode';
 import type { MobilePane } from '../../hooks/useWorkspaceUIState';
 
@@ -19,6 +19,8 @@ interface MobileWorkspaceProps {
   isLoading: boolean;
   customInput: string;
   onCustomInputChange: (value: string) => void;
+  executorMode: ExecutorMode;
+  onToggleExecutorMode: () => void;
   activeTab: 'output' | 'tests';
   onTabChange: (tab: 'output' | 'tests') => void;
 }
@@ -37,6 +39,8 @@ const MobileWorkspace = ({
   isLoading,
   customInput,
   onCustomInputChange,
+  executorMode,
+  onToggleExecutorMode,
   activeTab,
   onTabChange,
 }: MobileWorkspaceProps) => (
@@ -74,6 +78,8 @@ const MobileWorkspace = ({
         isLoading={isLoading}
         customInput={customInput}
         onCustomInputChange={onCustomInputChange}
+        executorMode={executorMode}
+        onToggleExecutorMode={onToggleExecutorMode}
         activeTab={activeTab}
         onTabChange={onTabChange}
       />

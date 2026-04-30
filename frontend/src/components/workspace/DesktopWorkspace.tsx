@@ -5,6 +5,7 @@ import ProblemSelector from './ProblemSelector';
 import EditorPane from './EditorPane';
 import type {
   ExecutionResult,
+  ExecutorMode,
   Problem,
   ProblemSummary,
   TestResult,
@@ -29,6 +30,8 @@ interface DesktopWorkspaceProps {
   themeMode: ThemeMode;
   onRun: () => void;
   onTest: () => void;
+  executorMode: ExecutorMode;
+  onToggleExecutorMode: () => void;
   onReset: () => void;
   isLoading: boolean;
   executionResult?: ExecutionResult | null;
@@ -57,6 +60,8 @@ const DesktopWorkspace = ({
   themeMode,
   onRun,
   onTest,
+  executorMode,
+  onToggleExecutorMode,
   onReset,
   isLoading,
   executionResult,
@@ -136,6 +141,8 @@ const DesktopWorkspace = ({
         isLoading={isLoading}
         customInput={customInput}
         onCustomInputChange={onCustomInputChange}
+        executorMode={executorMode}
+        onToggleExecutorMode={onToggleExecutorMode}
         activeTab={activeTab}
         onTabChange={onTabChange}
       />

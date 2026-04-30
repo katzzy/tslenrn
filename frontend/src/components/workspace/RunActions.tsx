@@ -6,7 +6,13 @@ interface RunActionsProps {
   compact?: boolean;
 }
 
-const RunActions = ({ onRun, onTest, onReset, isLoading, compact = false }: RunActionsProps) => {
+const RunActions = ({
+  onRun,
+  onTest,
+  onReset,
+  isLoading,
+  compact = false,
+}: RunActionsProps) => {
   const sizeClass = compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm';
 
   return (

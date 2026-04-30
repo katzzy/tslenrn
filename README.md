@@ -4,7 +4,7 @@
 
 ## 功能
 
-- 100 道 ACM 风格题目（前 50 题 TS 学习，后 50 题算法进阶）
+- 200 道 ACM 风格题目（按核心 / 强化 / 挑战路径分层）
 - iOS 风格三列工作区（左题面与切题 / 中代码编辑 / 右输入与结果）
 - Monaco 编辑器（TypeScript 语法与类型提示）
 - 在线运行（自定义输入）
@@ -47,7 +47,7 @@ PORT=3000
 NODE_ENV=development
 DOCKER_IMAGE=tslenrn-executor:latest
 EXECUTOR_MODE=auto
-ALLOW_UNSAFE_LOCAL_EXECUTION=true
+ALLOW_UNSAFE_LOCAL_EXECUTION=false
 EXECUTION_TIMEOUT=5000
 MAX_OUTPUT_LENGTH=10000
 ```
@@ -132,9 +132,9 @@ process.stdout.write(out.join('\n'));
 - `GET /api/problems/stats`：题库分布统计（难度/路径/模块）
 - `GET /api/problems/:id`：题目详情（含公开测试信息）
 - `POST /api/execute`：运行代码
-  - body: `{ code: string, input?: string }`
+  - body: `{ code: string, input?: string, executorMode?: 'docker' | 'local' | 'auto' }`
 - `POST /api/test`：判题
-  - body: `{ code: string, problemId: number }`
+  - body: `{ code: string, problemId: number, executorMode?: 'docker' | 'local' | 'auto' }`
 
 ## 项目结构
 
