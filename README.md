@@ -56,7 +56,8 @@ MAX_OUTPUT_LENGTH=10000
 - `EXECUTOR_MODE=auto`：优先 Docker，不可用时回退本地执行
 - `EXECUTOR_MODE=docker`：强制 Docker（不可用时报错）
 - `EXECUTOR_MODE=local`：强制本地执行（无容器隔离）
-- `ALLOW_UNSAFE_LOCAL_EXECUTION=false`：禁用本地回退（Docker 不可用时直接报错）
+- `ALLOW_UNSAFE_LOCAL_EXECUTION=false`（默认）：禁用本地回退（Docker 不可用时直接报错）
+- `ALLOW_UNSAFE_LOCAL_EXECUTION=true`：显式启用本地回退（开发调试可用，但不安全）
 
 ### 3. 构建执行镜像
 
@@ -161,7 +162,7 @@ tslenrn/
 - 检查 Docker 是否可用：`docker run --rm node:18-alpine node -v`
 - 确认执行镜像已构建：`cd backend && ./build-docker.sh`
 - 如需更长运行时间，调大 `backend/.env` 的 `EXECUTION_TIMEOUT`
-- 若本机无 Docker，可使用本地回退执行（`EXECUTOR_MODE=auto/local`），但安全性低于容器隔离
+- 若本机无 Docker 且要继续执行，请显式设置 `ALLOW_UNSAFE_LOCAL_EXECUTION=true`（仅建议本地开发环境）
 
 ### 2) 判题结果和本地运行不一致
 

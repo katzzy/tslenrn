@@ -40,7 +40,7 @@ export class DockerExecutor {
     this.executorMode =
       configuredMode === 'docker' || configuredMode === 'local' ? configuredMode : 'auto';
     this.allowUnsafeLocalExecution =
-      (process.env.ALLOW_UNSAFE_LOCAL_EXECUTION ?? 'true').toLowerCase() === 'true';
+      (process.env.ALLOW_UNSAFE_LOCAL_EXECUTION ?? 'false').toLowerCase() === 'true';
   }
 
   private async runProcess(
@@ -251,7 +251,7 @@ export class DockerExecutor {
   ): Promise<ExecutionOutput> {
     if (!this.allowUnsafeLocalExecution) {
       throw new ExecutionFailure(
-        'Docker is unavailable and local execution fallback is disabled (ALLOW_UNSAFE_LOCAL_EXECUTION=false).'
+        'Docker is unavailable and local execution fallback is disabled (set ALLOW_UNSAFE_LOCAL_EXECUTION=true to opt in).'
       );
     }
 
@@ -289,8 +289,8 @@ export class DockerExecutor {
     if (this.executorMode === 'local') {
       return 'local';
     }
-
-    return (await this.isDockerAvailable()) ? 'docker' : 'local';
+    const dockerAvailable = await this.isDockerAvailable();
+    return dockerAvailable ? 'docker' : 'local';
   }
 
   async execute(code: string, options: ExecutionOptions = {}): Promise<ExecutionOutput> {

@@ -25,7 +25,8 @@ if command -v docker &> /dev/null; then
     echo "✅ Docker version: $(docker --version)"
     HAS_DOCKER=true
 else
-    echo "⚠️  Docker not found. Backend will use local execution fallback (less secure, no container isolation)."
+    echo "⚠️  Docker not found. Local execution fallback is disabled by default."
+    echo "   If needed, set ALLOW_UNSAFE_LOCAL_EXECUTION=true in backend/.env (less secure)."
 fi
 
 echo ""

@@ -71,6 +71,14 @@ else
   API_STATUS="⚠️  Not reachable (start backend to verify endpoints)"
 fi
 echo "  ${API_STATUS}"
+if [ -f "backend/.env" ]; then
+  EXECUTOR_MODE_VALUE="$(grep -E '^EXECUTOR_MODE=' backend/.env | tail -n 1 | cut -d'=' -f2-)"
+  LOCAL_FALLBACK_VALUE="$(grep -E '^ALLOW_UNSAFE_LOCAL_EXECUTION=' backend/.env | tail -n 1 | cut -d'=' -f2-)"
+  [ -z "${EXECUTOR_MODE_VALUE}" ] && EXECUTOR_MODE_VALUE="auto (default)"
+  [ -z "${LOCAL_FALLBACK_VALUE}" ] && LOCAL_FALLBACK_VALUE="false (default)"
+  echo "  Executor mode: ${EXECUTOR_MODE_VALUE}"
+  echo "  Unsafe local fallback: ${LOCAL_FALLBACK_VALUE}"
+fi
 echo ""
 
 # Summary
