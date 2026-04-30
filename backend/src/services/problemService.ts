@@ -1,11 +1,19 @@
 import { problems } from '../problems';
-import type { Problem } from '../types/problem';
+import type { LearningModule, LearningTrack, Problem } from '../types/problem';
 import { HttpError } from '../utils/http';
 
 export interface ProblemSummary {
   id: number;
   title: string;
   difficulty: Problem['difficulty'];
+  learning: Problem['learning'];
+}
+
+export interface ProblemBankStats {
+  total: number;
+  difficulty: Record<Problem['difficulty'], number>;
+  track: Record<LearningTrack, number>;
+  module: Record<LearningModule, number>;
 }
 
 export const listProblems = (): ProblemSummary[] =>
@@ -13,7 +21,31 @@ export const listProblems = (): ProblemSummary[] =>
     id: problem.id,
     title: problem.title,
     difficulty: problem.difficulty,
+    learning: problem.learning,
   }));
+
+export const getProblemBankStats = (): ProblemBankStats => {
+  const stats: ProblemBankStats = {
+    total: problems.length,
+    difficulty: { easy: 0, medium: 0, hard: 0 },
+    track: { core: 0, reinforcement: 0, challenge: 0 },
+    module: {
+      'ts-foundation': 0,
+      'ts-engineering': 0,
+      'data-structures': 0,
+      'algorithm-patterns': 0,
+      'advanced-algorithms': 0,
+    },
+  };
+
+  for (const problem of problems) {
+    stats.difficulty[problem.difficulty] += 1;
+    stats.track[problem.learning.track] += 1;
+    stats.module[problem.learning.module] += 1;
+  }
+
+  return stats;
+};
 
 export const getProblemByIdOrThrow = (problemId: number): Problem => {
   const problem = problems.find((item) => item.id === problemId);

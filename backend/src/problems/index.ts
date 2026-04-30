@@ -1,12 +1,44 @@
-import { Problem } from '../types/problem';
+import { LearningModule, LearningTrack, Problem, ProblemLearningMeta } from '../types/problem';
 import { acmStarterCode } from './starterCode';
 
-type ProblemDraft = Omit<Problem, 'starterCode'>;
+type ProblemDraft = Omit<Problem, 'starterCode' | 'learning'> & {
+  learning?: Partial<ProblemLearningMeta>;
+};
 
 interface ProblemFormat {
   input: string;
   output: string;
 }
+
+interface LearningBlueprint {
+  from: number;
+  to: number;
+  module: LearningModule;
+  track: LearningTrack;
+}
+
+const learningBlueprints: readonly LearningBlueprint[] = [
+  { from: 1, to: 20, module: 'ts-foundation', track: 'core' },
+  { from: 21, to: 40, module: 'ts-engineering', track: 'core' },
+  { from: 41, to: 60, module: 'data-structures', track: 'reinforcement' },
+  { from: 61, to: 85, module: 'algorithm-patterns', track: 'reinforcement' },
+  { from: 86, to: 100, module: 'advanced-algorithms', track: 'challenge' },
+];
+
+const keywordTagRules: ReadonlyArray<{ regex: RegExp; tag: string }> = [
+  { regex: /字符串|回文|前缀|子串|编码|anagram|kmp/i, tag: 'string' },
+  { regex: /数组|排序|区间|滑动窗口|双指针/i, tag: 'array' },
+  { regex: /栈|括号|逆波兰|单调/i, tag: 'stack' },
+  { regex: /队列/i, tag: 'queue' },
+  { regex: /哈希|map|set|字典/i, tag: 'hash' },
+  { regex: /树|二叉|遍历|lca/i, tag: 'tree' },
+  { regex: /图|最短路|并查集|连通|课程/i, tag: 'graph' },
+  { regex: /动态规划|dp|背包|子序列|斐波那契/i, tag: 'dynamic-programming' },
+  { regex: /贪心/i, tag: 'greedy' },
+  { regex: /二分/i, tag: 'binary-search' },
+  { regex: /数学|质数|因数|组合|gcd|lcm|阶乘/i, tag: 'math' },
+  { regex: /json|日志|csv|路径|http/i, tag: 'engineering' },
+];
 
 const problemFormats: Record<number, ProblemFormat> = {
   1: { input: '一行两个整数 a b。', output: '输出一行整数 a+b。' },
@@ -142,9 +174,67 @@ const buildUnifiedDescription = (
   ].join('\n');
 };
 
+const resolveLearningBlueprint = (problemId: number): LearningBlueprint => {
+  const blueprint = learningBlueprints.find(({ from, to }) => problemId >= from && problemId <= to);
+  if (!blueprint) {
+    throw new Error(`Missing learning blueprint for problem ${problemId}`);
+  }
+  return blueprint;
+};
+
+const inferPrerequisites = (problemId: number): number[] => {
+  if (problemId <= 1) {
+    return [];
+  }
+  if (problemId <= 50) {
+    return [problemId - 1];
+  }
+  if (problemId <= 80) {
+    return [problemId - 1, problemId - 5];
+  }
+  return [problemId - 1, problemId - 10];
+};
+
+const inferTags = (problem: ProblemDraft): string[] => {
+  const source = `${problem.title}\n${problem.description}`;
+  const tags = new Set<string>();
+  for (const rule of keywordTagRules) {
+    if (rule.regex.test(source)) {
+      tags.add(rule.tag);
+    }
+  }
+  if (tags.size === 0) {
+    tags.add('implementation');
+  }
+  return Array.from(tags);
+};
+
+const baseEstimatedMinutes = (difficulty: Problem['difficulty']): number => {
+  if (difficulty === 'easy') return 15;
+  if (difficulty === 'medium') return 30;
+  return 45;
+};
+
+const buildLearningMeta = (problem: ProblemDraft): ProblemLearningMeta => {
+  const blueprint = resolveLearningBlueprint(problem.id);
+  const estimatedMinutes =
+    baseEstimatedMinutes(problem.difficulty) + (blueprint.track === 'challenge' ? 10 : 0);
+
+  return {
+    track: blueprint.track,
+    module: blueprint.module,
+    tags: inferTags(problem),
+    prerequisites: inferPrerequisites(problem.id),
+    recommendedOrder: problem.id,
+    estimatedMinutes,
+    ...problem.learning,
+  };
+};
+
 const m = (problem: ProblemDraft): Problem => ({
   ...problem,
   description: buildUnifiedDescription(problem.id, problem.description, problem.testCases),
+  learning: buildLearningMeta(problem),
   starterCode: acmStarterCode,
 });
 

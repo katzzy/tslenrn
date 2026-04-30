@@ -1,5 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { getProblemByIdOrThrow, getProblemDetail, listProblems } from '../services/problemService';
+import {
+  getProblemBankStats,
+  getProblemByIdOrThrow,
+  getProblemDetail,
+  listProblems,
+} from '../services/problemService';
 import { runProblemTests } from '../services/testRunner';
 import { asyncHandler } from '../utils/http';
 import { validateCode, validateProblemId, validateProblemIdParam } from '../utils/validation';
@@ -8,6 +13,10 @@ const router = Router();
 
 router.get('/problems', (req: Request, res: Response) => {
   res.json(listProblems());
+});
+
+router.get('/problems/stats', (req: Request, res: Response) => {
+  res.json(getProblemBankStats());
 });
 
 router.get('/problems/:id', (req: Request, res: Response) => {

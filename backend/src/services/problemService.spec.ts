@@ -1,13 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getProblemByIdOrThrow, getProblemDetail, listProblems } from './problemService';
+import {
+  getProblemBankStats,
+  getProblemByIdOrThrow,
+  getProblemDetail,
+  listProblems,
+} from './problemService';
 import { problems } from '../problems';
 import { HttpError } from '../utils/http';
 
 test('listProblems returns summary for each problem', () => {
   const summaries = listProblems();
   assert.equal(summaries.length, problems.length);
-  assert.deepEqual(Object.keys(summaries[0]).sort(), ['difficulty', 'id', 'title']);
+  assert.deepEqual(Object.keys(summaries[0]).sort(), ['difficulty', 'id', 'learning', 'title']);
+  assert.ok(Array.isArray(summaries[0].learning.tags));
 });
 
 test('getProblemByIdOrThrow returns problem when id exists', () => {
@@ -31,4 +37,20 @@ test('getProblemDetail strips hidden test cases', () => {
   const detail = getProblemDetail(withHidden.id);
   assert.ok(detail.testCases.every((item) => !item.hidden));
   assert.ok(detail.testCases.length <= withHidden.testCases.length);
+});
+
+test('getProblemBankStats aggregates difficulty and learning dimensions', () => {
+  const stats = getProblemBankStats();
+
+  assert.equal(stats.total, problems.length);
+  assert.equal(stats.track.core + stats.track.reinforcement + stats.track.challenge, problems.length);
+  assert.equal(stats.difficulty.easy + stats.difficulty.medium + stats.difficulty.hard, problems.length);
+  assert.equal(
+    stats.module['ts-foundation'] +
+      stats.module['ts-engineering'] +
+      stats.module['data-structures'] +
+      stats.module['algorithm-patterns'] +
+      stats.module['advanced-algorithms'],
+    problems.length
+  );
 });

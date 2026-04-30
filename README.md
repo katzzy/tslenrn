@@ -11,6 +11,7 @@
 - 自动评测（公开 + 隐藏测试用例）
 - Docker 隔离执行（限制网络、内存、CPU、进程数）
 - 代码自动本地保存（按题目缓存）
+- 题库学习路径元数据（核心/强化/挑战 + 模块 + 标签 + 先修题）
 
 ## 技术栈
 
@@ -128,6 +129,7 @@ process.stdout.write(out.join('\n'));
 
 - `GET /api/health`：健康检查
 - `GET /api/problems`：题目列表
+- `GET /api/problems/stats`：题库分布统计（难度/路径/模块）
 - `GET /api/problems/:id`：题目详情（含公开测试信息）
 - `POST /api/execute`：运行代码
   - body: `{ code: string, input?: string }`

@@ -9,6 +9,19 @@ const ProblemDetail: React.FC<ProblemDetailProps> = ({ problem }) => {
   const [showHints, setShowHints] = useState(false);
   const difficultyLabel =
     problem.difficulty === 'easy' ? '简单' : problem.difficulty === 'medium' ? '中等' : '困难';
+  const trackLabel =
+    problem.learning.track === 'core'
+      ? '核心路径'
+      : problem.learning.track === 'reinforcement'
+        ? '强化路径'
+        : '挑战路径';
+  const moduleLabelMap: Record<typeof problem.learning.module, string> = {
+    'ts-foundation': 'TS 基础',
+    'ts-engineering': 'TS 工程',
+    'data-structures': '数据结构',
+    'algorithm-patterns': '算法模式',
+    'advanced-algorithms': '进阶算法',
+  };
 
   return (
     <div className="h-full overflow-y-auto bg-transparent p-6">
@@ -23,6 +36,38 @@ const ProblemDetail: React.FC<ProblemDetailProps> = ({ problem }) => {
         }`}>
           {difficultyLabel}
         </span>
+      </div>
+
+      <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white/70 p-3 text-xs text-slate-600 dark:border-white/10 dark:bg-gray-900/50 dark:text-gray-300">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-gray-800">路径：{trackLabel}</span>
+          <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-gray-800">
+            模块：{moduleLabelMap[problem.learning.module]}
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-gray-800">
+            建议耗时：{problem.learning.estimatedMinutes} 分钟
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-gray-800">
+            建议顺序：#{problem.learning.recommendedOrder}
+          </span>
+        </div>
+        {problem.learning.prerequisites.length > 0 && (
+          <div className="mt-2">
+            先修题：{problem.learning.prerequisites.map((id) => `#${id}`).join('、')}
+          </div>
+        )}
+        {problem.learning.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {problem.learning.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 dark:border-gray-700 dark:text-gray-300"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="prose dark:prose-invert max-w-none mb-4">
