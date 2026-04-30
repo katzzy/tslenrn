@@ -10,19 +10,30 @@ interface ProblemFormat {
   output: string;
 }
 
-interface LearningBlueprint {
+interface LearningTrackBlueprint {
   from: number;
   to: number;
-  module: LearningModule;
   track: LearningTrack;
 }
 
-const learningBlueprints: readonly LearningBlueprint[] = [
-  { from: 1, to: 20, module: 'ts-foundation', track: 'core' },
-  { from: 21, to: 40, module: 'ts-engineering', track: 'core' },
-  { from: 41, to: 60, module: 'data-structures', track: 'reinforcement' },
-  { from: 61, to: 85, module: 'algorithm-patterns', track: 'reinforcement' },
-  { from: 86, to: 100, module: 'advanced-algorithms', track: 'challenge' },
+interface LearningModuleBlueprint {
+  from: number;
+  to: number;
+  module: LearningModule;
+}
+
+const learningTrackBlueprints: readonly LearningTrackBlueprint[] = [
+  { from: 1, to: 90, track: 'core' },
+  { from: 91, to: 160, track: 'reinforcement' },
+  { from: 161, to: 200, track: 'challenge' },
+];
+
+const learningModuleBlueprints: readonly LearningModuleBlueprint[] = [
+  { from: 1, to: 40, module: 'ts-foundation' },
+  { from: 41, to: 70, module: 'ts-engineering' },
+  { from: 71, to: 120, module: 'data-structures' },
+  { from: 121, to: 180, module: 'algorithm-patterns' },
+  { from: 181, to: 200, module: 'advanced-algorithms' },
 ];
 
 const keywordTagRules: ReadonlyArray<{ regex: RegExp; tag: string }> = [
@@ -148,10 +159,10 @@ const buildUnifiedDescription = (
   rawDescription: string,
   testCases: ProblemDraft['testCases']
 ): string => {
-  const format = problemFormats[problemId];
-  if (!format) {
-    throw new Error(`Missing input/output format for problem ${problemId}`);
-  }
+  const format: ProblemFormat = problemFormats[problemId] ?? {
+    input: '请按题意读取标准输入（stdin）中的多行数据。',
+    output: '请将结果按题意写入标准输出（stdout）。',
+  };
   const example = testCases.find((testCase) => !testCase.hidden) ?? testCases[0];
   const sampleInput = example?.input ?? '';
   const sampleOutput = example?.expectedOutput ?? '';
@@ -174,12 +185,20 @@ const buildUnifiedDescription = (
   ].join('\n');
 };
 
-const resolveLearningBlueprint = (problemId: number): LearningBlueprint => {
-  const blueprint = learningBlueprints.find(({ from, to }) => problemId >= from && problemId <= to);
+const resolveLearningTrack = (problemId: number): LearningTrack => {
+  const blueprint = learningTrackBlueprints.find(({ from, to }) => problemId >= from && problemId <= to);
   if (!blueprint) {
-    throw new Error(`Missing learning blueprint for problem ${problemId}`);
+    throw new Error(`Missing learning track for problem ${problemId}`);
   }
-  return blueprint;
+  return blueprint.track;
+};
+
+const resolveLearningModule = (problemId: number): LearningModule => {
+  const blueprint = learningModuleBlueprints.find(({ from, to }) => problemId >= from && problemId <= to);
+  if (!blueprint) {
+    throw new Error(`Missing learning module for problem ${problemId}`);
+  }
+  return blueprint.module;
 };
 
 const inferPrerequisites = (problemId: number): number[] => {
@@ -216,13 +235,14 @@ const baseEstimatedMinutes = (difficulty: Problem['difficulty']): number => {
 };
 
 const buildLearningMeta = (problem: ProblemDraft): ProblemLearningMeta => {
-  const blueprint = resolveLearningBlueprint(problem.id);
+  const track = resolveLearningTrack(problem.id);
+  const module = resolveLearningModule(problem.id);
   const estimatedMinutes =
-    baseEstimatedMinutes(problem.difficulty) + (blueprint.track === 'challenge' ? 10 : 0);
+    baseEstimatedMinutes(problem.difficulty) + (track === 'challenge' ? 10 : 0);
 
   return {
-    track: blueprint.track,
-    module: blueprint.module,
+    track,
+    module,
     tags: inferTags(problem),
     prerequisites: inferPrerequisites(problem.id),
     recommendedOrder: problem.id,
@@ -237,6 +257,390 @@ const m = (problem: ProblemDraft): Problem => ({
   learning: buildLearningMeta(problem),
   starterCode: acmStarterCode,
 });
+
+const makeSeries = (seed: number, length: number, min: number, max: number): number[] => {
+  const span = max - min + 1;
+  return Array.from({ length }, (_, index) => {
+    const value = Math.abs(seed * 37 + index * 19 + seed * index * 3) % span;
+    return min + value;
+  });
+};
+
+const formatArrayCaseInput = (values: number[]): string => `${values.length}\n${values.join(' ')}`;
+
+const buildDifficultyForGenerated = (problemId: number): Problem['difficulty'] => {
+  const track = resolveLearningTrack(problemId);
+  if (track === 'reinforcement') {
+    const cycle: Problem['difficulty'][] = ['easy', 'medium', 'medium', 'medium', 'hard'];
+    return cycle[(problemId - 101) % cycle.length];
+  }
+  const challengeCycle: Problem['difficulty'][] = ['medium', 'hard', 'hard', 'hard', 'hard'];
+  return challengeCycle[(problemId - 161) % challengeCycle.length];
+};
+
+const buildDataStructureProblem = (problemId: number): ProblemDraft => {
+  const variant = (problemId - 101) % 4;
+  if (variant === 0) {
+    const values = makeSeries(problemId, 7, -12, 18);
+    const hiddenValues = makeSeries(problemId + 11, 9, -10, 22);
+    return {
+      id: problemId,
+      title: `数组求和进阶 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定一个整数数组，输出所有元素之和。',
+      hints: ['遍历数组累加', '注意负数'],
+      testCases: [
+        { input: formatArrayCaseInput(values), expectedOutput: String(values.reduce((sum, value) => sum + value, 0)) },
+        {
+          input: formatArrayCaseInput(hiddenValues),
+          expectedOutput: String(hiddenValues.reduce((sum, value) => sum + value, 0)),
+          hidden: true,
+        },
+      ],
+    };
+  }
+
+  if (variant === 1) {
+    const values = makeSeries(problemId, 10, 1, 9);
+    const hiddenValues = makeSeries(problemId + 5, 12, 1, 12);
+    return {
+      id: problemId,
+      title: `去重后元素个数 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定整数数组，输出去重后元素个数。',
+      hints: ['可用 Set 统计'],
+      testCases: [
+        { input: formatArrayCaseInput(values), expectedOutput: String(new Set(values).size) },
+        { input: formatArrayCaseInput(hiddenValues), expectedOutput: String(new Set(hiddenValues).size), hidden: true },
+      ],
+    };
+  }
+
+  if (variant === 2) {
+    const values = makeSeries(problemId, 8, -20, 20);
+    const hiddenValues = makeSeries(problemId + 7, 6, -15, 15);
+    const maxAbsDiff = Math.max(...values.map((value) => Math.abs(value)));
+    const hiddenMaxAbsDiff = Math.max(...hiddenValues.map((value) => Math.abs(value)));
+    return {
+      id: problemId,
+      title: `最大绝对值 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定整数数组，输出其中元素绝对值的最大值。',
+      hints: ['遍历比较 Math.abs(x)'],
+      testCases: [
+        { input: formatArrayCaseInput(values), expectedOutput: String(maxAbsDiff) },
+        { input: formatArrayCaseInput(hiddenValues), expectedOutput: String(hiddenMaxAbsDiff), hidden: true },
+      ],
+    };
+  }
+
+  const values = makeSeries(problemId, 7, 0, 30);
+  const hiddenValues = makeSeries(problemId + 9, 7, 0, 30);
+  return {
+    id: problemId,
+    title: `相邻差值和 #${problemId}`,
+    difficulty: buildDifficultyForGenerated(problemId),
+    description: '给定数组，输出所有相邻元素差值绝对值之和。',
+    hints: ['从第二个元素开始累加 |a[i]-a[i-1]|'],
+    testCases: [
+      {
+        input: formatArrayCaseInput(values),
+        expectedOutput: String(values.slice(1).reduce((sum, value, index) => sum + Math.abs(value - values[index]), 0)),
+      },
+      {
+        input: formatArrayCaseInput(hiddenValues),
+        expectedOutput: String(
+          hiddenValues.slice(1).reduce((sum, value, index) => sum + Math.abs(value - hiddenValues[index]), 0)
+        ),
+        hidden: true,
+      },
+    ],
+  };
+};
+
+const buildAlgorithmPatternProblem = (problemId: number): ProblemDraft => {
+  const variant = (problemId - 121) % 5;
+
+  if (variant === 0) {
+    const values = makeSeries(problemId, 9, -5, 15);
+    const windowSize = 3 + (problemId % 3);
+    const hiddenValues = makeSeries(problemId + 6, 10, -6, 18);
+    const hiddenWindowSize = 2 + (problemId % 4);
+    const maxWindowSum = (arr: number[], k: number): number => {
+      let best = -Infinity;
+      for (let i = 0; i + k <= arr.length; i += 1) {
+        const sum = arr.slice(i, i + k).reduce((acc, value) => acc + value, 0);
+        best = Math.max(best, sum);
+      }
+      return best;
+    };
+    return {
+      id: problemId,
+      title: `定长滑窗最大和 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定数组和窗口长度 k，输出所有长度为 k 的子数组中最大和。',
+      hints: ['维护当前窗口和', '滑动时减左加右'],
+      testCases: [
+        { input: `${values.length} ${windowSize}\n${values.join(' ')}`, expectedOutput: String(maxWindowSum(values, windowSize)) },
+        {
+          input: `${hiddenValues.length} ${hiddenWindowSize}\n${hiddenValues.join(' ')}`,
+          expectedOutput: String(maxWindowSum(hiddenValues, hiddenWindowSize)),
+          hidden: true,
+        },
+      ],
+    };
+  }
+
+  if (variant === 1) {
+    const values = makeSeries(problemId, 8, 1, 40).sort((a, b) => a - b);
+    const target = values[problemId % values.length];
+    const hiddenValues = makeSeries(problemId + 10, 9, 1, 50).sort((a, b) => a - b);
+    const hiddenTarget = 99;
+    return {
+      id: problemId,
+      title: `二分查找首个命中 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定升序数组和目标值 target，输出 target 首次出现下标，不存在输出 -1。',
+      hints: ['标准二分', '命中后继续收缩右边界'],
+      testCases: [
+        { input: `${values.length} ${target}\n${values.join(' ')}`, expectedOutput: String(values.indexOf(target)) },
+        { input: `${hiddenValues.length} ${hiddenTarget}\n${hiddenValues.join(' ')}`, expectedOutput: '-1', hidden: true },
+      ],
+    };
+  }
+
+  if (variant === 2) {
+    const values = makeSeries(problemId, 10, -8, 12);
+    const hiddenValues = makeSeries(problemId + 4, 11, -10, 14);
+    const prefixBest = (arr: number[]): number => {
+      let best = -Infinity;
+      let current = 0;
+      for (const value of arr) {
+        current = Math.max(value, current + value);
+        best = Math.max(best, current);
+      }
+      return best;
+    };
+    return {
+      id: problemId,
+      title: `最大子数组和 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定整数数组，输出连续子数组最大和。',
+      hints: ['Kadane 算法'],
+      testCases: [
+        { input: formatArrayCaseInput(values), expectedOutput: String(prefixBest(values)) },
+        { input: formatArrayCaseInput(hiddenValues), expectedOutput: String(prefixBest(hiddenValues)), hidden: true },
+      ],
+    };
+  }
+
+  if (variant === 3) {
+    const values = makeSeries(problemId, 7, 0, 30);
+    const ranges = [
+      [1, 3],
+      [2, 5],
+      [1, 7],
+    ] as const;
+    const hiddenValues = makeSeries(problemId + 8, 6, 0, 25);
+    const hiddenRanges = [
+      [1, 2],
+      [3, 6],
+    ] as const;
+    const rangeSum = (arr: number[], l: number, r: number): number =>
+      arr.slice(l - 1, r).reduce((sum, value) => sum + value, 0);
+    return {
+      id: problemId,
+      title: `前缀和区间查询 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定数组与若干 1-based 区间 [l,r]，按顺序输出每个区间和。',
+      hints: ['先构建前缀和数组'],
+      testCases: [
+        {
+          input: `${values.length} ${ranges.length}\n${values.join(' ')}\n${ranges.map(([l, r]) => `${l} ${r}`).join('\n')}`,
+          expectedOutput: ranges.map(([l, r]) => rangeSum(values, l, r)).join('\n'),
+        },
+        {
+          input: `${hiddenValues.length} ${hiddenRanges.length}\n${hiddenValues.join(' ')}\n${hiddenRanges
+            .map(([l, r]) => `${l} ${r}`)
+            .join('\n')}`,
+          expectedOutput: hiddenRanges.map(([l, r]) => rangeSum(hiddenValues, l, r)).join('\n'),
+          hidden: true,
+        },
+      ],
+    };
+  }
+
+  const values = makeSeries(problemId, 9, -5, 20).sort((a, b) => a - b);
+  const target = values[1] + values[7];
+  const hiddenValues = makeSeries(problemId + 3, 8, -2, 25).sort((a, b) => a - b);
+  const hiddenTarget = hiddenValues[0] + hiddenValues[hiddenValues.length - 1];
+  const findPair = (arr: number[], sum: number): string => {
+    let left = 0;
+    let right = arr.length - 1;
+    while (left < right) {
+      const current = arr[left] + arr[right];
+      if (current === sum) return `${left + 1} ${right + 1}`;
+      if (current < sum) left += 1;
+      else right -= 1;
+    }
+    return '-1 -1';
+  };
+  return {
+    id: problemId,
+    title: `双指针两数之和 #${problemId}`,
+    difficulty: buildDifficultyForGenerated(problemId),
+    description: '给定升序数组和目标和，输出满足 a[i]+a[j]=target 的 1-based 下标，不存在输出 -1 -1。',
+    hints: ['左右指针向中间逼近'],
+    testCases: [
+      { input: `${values.length} ${target}\n${values.join(' ')}`, expectedOutput: findPair(values, target) },
+      { input: `${hiddenValues.length} ${hiddenTarget}\n${hiddenValues.join(' ')}`, expectedOutput: findPair(hiddenValues, hiddenTarget), hidden: true },
+    ],
+  };
+};
+
+const buildAdvancedAlgorithmProblem = (problemId: number): ProblemDraft => {
+  const variant = (problemId - 181) % 4;
+
+  if (variant === 0) {
+    const n = 25 + (problemId % 10);
+    const hiddenN = 30 + (problemId % 7);
+    const fib = (value: number): number => {
+      const mod = 1_000_000_007;
+      let a = 0;
+      let b = 1;
+      for (let i = 0; i < value; i += 1) {
+        const next = (a + b) % mod;
+        a = b;
+        b = next;
+      }
+      return a;
+    };
+    return {
+      id: problemId,
+      title: `斐波那契模运算 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定 n，输出第 n 个斐波那契数（f(0)=0,f(1)=1）对 1e9+7 取模后的结果。',
+      hints: ['线性 DP 即可通过'],
+      testCases: [
+        { input: String(n), expectedOutput: String(fib(n)) },
+        { input: String(hiddenN), expectedOutput: String(fib(hiddenN)), hidden: true },
+      ],
+    };
+  }
+
+  if (variant === 1) {
+    const values = makeSeries(problemId, 9, 1, 20);
+    const hiddenValues = makeSeries(problemId + 5, 8, 1, 25);
+    const lisLength = (arr: number[]): number => {
+      const tails: number[] = [];
+      for (const value of arr) {
+        let left = 0;
+        let right = tails.length;
+        while (left < right) {
+          const mid = Math.floor((left + right) / 2);
+          if (tails[mid] < value) left = mid + 1;
+          else right = mid;
+        }
+        tails[left] = value;
+      }
+      return tails.length;
+    };
+    return {
+      id: problemId,
+      title: `最长递增子序列 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定整数数组，输出最长严格递增子序列长度。',
+      hints: ['可用 O(n log n) 贪心+二分'],
+      testCases: [
+        { input: formatArrayCaseInput(values), expectedOutput: String(lisLength(values)) },
+        { input: formatArrayCaseInput(hiddenValues), expectedOutput: String(lisLength(hiddenValues)), hidden: true },
+      ],
+    };
+  }
+
+  if (variant === 2) {
+    const coins = [1, 2, 5, 7];
+    const amount = 18 + (problemId % 6);
+    const hiddenCoins = [2, 4, 9];
+    const hiddenAmount = 23;
+    const minCoinCount = (coinTypes: number[], target: number): number => {
+      const dp = Array.from({ length: target + 1 }, () => Number.POSITIVE_INFINITY);
+      dp[0] = 0;
+      for (let i = 1; i <= target; i += 1) {
+        for (const coin of coinTypes) {
+          if (i - coin >= 0 && Number.isFinite(dp[i - coin])) {
+            dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+          }
+        }
+      }
+      return Number.isFinite(dp[target]) ? dp[target] : -1;
+    };
+    return {
+      id: problemId,
+      title: `最少硬币数 #${problemId}`,
+      difficulty: buildDifficultyForGenerated(problemId),
+      description: '给定硬币面值与目标金额，输出凑出目标的最少硬币数量，不可达输出 -1。',
+      hints: ['完全背包 DP'],
+      testCases: [
+        { input: `${coins.length} ${amount}\n${coins.join(' ')}`, expectedOutput: String(minCoinCount(coins, amount)) },
+        {
+          input: `${hiddenCoins.length} ${hiddenAmount}\n${hiddenCoins.join(' ')}`,
+          expectedOutput: String(minCoinCount(hiddenCoins, hiddenAmount)),
+          hidden: true,
+        },
+      ],
+    };
+  }
+
+  const n = 6;
+  const capacity = 15 + (problemId % 5);
+  const weights = makeSeries(problemId, n, 1, 8);
+  const values = makeSeries(problemId + 2, n, 2, 20);
+  const hiddenCapacity = 10 + (problemId % 4);
+  const hiddenWeights = makeSeries(problemId + 7, n, 1, 7);
+  const hiddenValues = makeSeries(problemId + 9, n, 3, 18);
+  const knapsack = (w: number[], v: number[], cap: number): number => {
+    const dp = Array.from({ length: cap + 1 }, () => 0);
+    for (let i = 0; i < w.length; i += 1) {
+      for (let c = cap; c >= w[i]; c -= 1) {
+        dp[c] = Math.max(dp[c], dp[c - w[i]] + v[i]);
+      }
+    }
+    return dp[cap];
+  };
+  return {
+    id: problemId,
+    title: `01 背包最大价值 #${problemId}`,
+    difficulty: buildDifficultyForGenerated(problemId),
+    description: '给定 n 个物品（重量、价值）与背包容量，输出可获得的最大价值。',
+    hints: ['0/1 背包倒序枚举容量'],
+    testCases: [
+      {
+        input: `${n} ${capacity}\n${weights.join(' ')}\n${values.join(' ')}`,
+        expectedOutput: String(knapsack(weights, values, capacity)),
+      },
+      {
+        input: `${n} ${hiddenCapacity}\n${hiddenWeights.join(' ')}\n${hiddenValues.join(' ')}`,
+        expectedOutput: String(knapsack(hiddenWeights, hiddenValues, hiddenCapacity)),
+        hidden: true,
+      },
+    ],
+  };
+};
+
+const buildGeneratedProblem = (problemId: number): ProblemDraft => {
+  const module = resolveLearningModule(problemId);
+  if (module === 'data-structures') {
+    return buildDataStructureProblem(problemId);
+  }
+  if (module === 'algorithm-patterns') {
+    return buildAlgorithmPatternProblem(problemId);
+  }
+  return buildAdvancedAlgorithmProblem(problemId);
+};
+
+const buildExtendedProblems = (): Problem[] =>
+  Array.from({ length: 100 }, (_, index) => m(buildGeneratedProblem(101 + index)));
 
 export const problems: Problem[] = [
   // ========= TypeScript 学习区（1-50）=========
@@ -1382,4 +1786,5 @@ FT 工资=base+bonus；PT 工资=hours*rate。`,
       { input: '3 4\n1 2 1', expectedOutput: '-1', hidden: true },
     ],
   }),
+  ...buildExtendedProblems(),
 ];

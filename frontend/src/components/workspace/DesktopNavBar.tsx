@@ -30,9 +30,9 @@ const DesktopNavBar = ({
       </div>
     </div>
     <div className="flex items-center gap-2">
-      <ThemeToggle themeMode={themeMode} onToggle={onToggleTheme} />
       <span className="ios-chip">题号 #{selectedProblemId}</span>
       {selectedProblem && <span className="ios-chip max-w-56 truncate">{selectedProblem.title}</span>}
+      <ThemeToggle themeMode={themeMode} onToggle={onToggleTheme} />
     </div>
   </header>
 );

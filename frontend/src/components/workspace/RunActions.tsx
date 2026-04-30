@@ -21,14 +21,14 @@ const RunActions = ({ onRun, onTest, onReset, isLoading, compact = false }: RunA
       <button
         onClick={onTest}
         disabled={isLoading}
-        className={`rounded-full bg-slate-900 font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 ${sizeClass}`}
+        className={`rounded-full bg-amber-600 font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-500 dark:hover:bg-amber-600 ${sizeClass}`}
       >
         {compact ? '提交测试' : '✓ 提交测试'}
       </button>
       {onReset && (
         <button
           onClick={onReset}
-          className={`rounded-full border border-white/80 bg-white/85 font-medium text-gray-700 hover:bg-white dark:border-white/10 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-800 ${sizeClass}`}
+          className={`rounded-full bg-rose-600 font-medium text-white transition-colors hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600 ${sizeClass}`}
         >
           重置
         </button>

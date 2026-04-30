@@ -43,6 +43,10 @@ test('getProblemBankStats aggregates difficulty and learning dimensions', () => 
   const stats = getProblemBankStats();
 
   assert.equal(stats.total, problems.length);
+  assert.equal(stats.total, 200);
+  assert.equal(stats.track.core, 90);
+  assert.equal(stats.track.reinforcement, 70);
+  assert.equal(stats.track.challenge, 40);
   assert.equal(stats.track.core + stats.track.reinforcement + stats.track.challenge, problems.length);
   assert.equal(stats.difficulty.easy + stats.difficulty.medium + stats.difficulty.hard, problems.length);
   assert.equal(
