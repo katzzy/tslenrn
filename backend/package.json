@@ -5,15 +5,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "prebuild": "npm --workspace @tslenrn/shared run build",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsx --test src/**/*.spec.ts"
+    "test": "tsx --test \"src/**/*.spec.ts\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@tslenrn/shared": "*",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
     "express": "^5.2.1"

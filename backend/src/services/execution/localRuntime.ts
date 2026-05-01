@@ -58,18 +58,9 @@ export interface LocalRuntimeOptions {
   tempDir: string;
   timeout: number;
   maxOutputLength: number;
-  allowUnsafeLocalFallback: boolean;
-  forceLocalByRequest: boolean;
 }
 
 export const executeLocally = async (options: LocalRuntimeOptions): Promise<ExecutionOutput> => {
-  if (!options.allowUnsafeLocalFallback && !options.forceLocalByRequest) {
-    throw new ExecutionFailure(
-      'Docker is unavailable and local execution fallback is disabled (set ALLOW_UNSAFE_LOCAL_EXECUTION=true to opt in).',
-      { code: 'LOCAL_FALLBACK_DISABLED' }
-    );
-  }
-
   const compiledFile = path.join(options.tempDir, 'code.js');
   await compileTypeScriptLocally(options.code, compiledFile);
 

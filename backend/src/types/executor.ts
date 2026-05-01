@@ -1,7 +1,1 @@
-export type ExecutorMode = 'auto' | 'docker' | 'local';
-
-export interface ExecutorCapabilities {
-  defaultMode: ExecutorMode;
-  dockerAvailable: boolean;
-  allowUnsafeLocalFallback: boolean;
-}
+export type { ExecutorCapabilities, ExecutorMode } from '@tslenrn/shared/types';

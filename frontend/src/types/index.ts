@@ -7,7 +7,7 @@ import type {
   SingleTestResult,
   TestCase,
   TestResult,
-} from '../../../shared/types';
+} from '@tslenrn/shared/types';
 
 export type {
   ExecutorCapabilities,

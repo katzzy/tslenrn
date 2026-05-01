@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { executeCode, getExecutorCapabilities, testCode } from '../utils/api';
 import { parseApiError } from '../utils/errors';
 import type { ExecutionResult, ExecutorCapabilities, ExecutorMode, TestResult } from '../types/index';
+import {
+  getExecutorHint,
+  getNextExecutorMode,
+  persistExecutorModePreference,
+  readExecutorModePreference,
+} from './executorModeState';
 
 export function useRunner() {
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
@@ -9,14 +15,14 @@ export function useRunner() {
   const [isLoading, setIsLoading] = useState(false);
   const [customInput, setCustomInput] = useState('');
   const [activeTab, setActiveTab] = useState<'output' | 'tests'>('output');
-  const [executorMode, setExecutorMode] = useState<ExecutorMode>('auto');
+  const [executorMode, setExecutorMode] = useState<ExecutorMode>(() => readExecutorModePreference());
   const [executorCapabilities, setExecutorCapabilities] = useState<ExecutorCapabilities | null>(null);
 
   const toggleExecutorMode = () => {
     setExecutorMode((prev) => {
-      if (prev === 'auto') return 'docker';
-      if (prev === 'docker') return 'local';
-      return 'auto';
+      const next = getNextExecutorMode(prev);
+      persistExecutorModePreference(next);
+      return next;
     });
   };
 
@@ -27,7 +33,6 @@ export function useRunner() {
         const capabilities = await getExecutorCapabilities();
         if (cancelled) return;
         setExecutorCapabilities(capabilities);
-        setExecutorMode(capabilities.defaultMode);
       } catch {
         if (cancelled) return;
         setExecutorCapabilities(null);
@@ -39,25 +44,15 @@ export function useRunner() {
     };
   }, []);
 
-  const getExecutorModeForRequest = (): ExecutorMode | undefined =>
-    executorMode === 'auto' ? undefined : executorMode;
+  const getExecutorModeForRequest = (): ExecutorMode => executorMode;
 
-  const executorBadgeLabel = useMemo(() => {
-    if (!executorCapabilities) return undefined;
-    if (executorMode === 'docker' && !executorCapabilities.dockerAvailable) {
-      return 'Docker 不可用';
-    }
-    if (executorMode === 'local' && !executorCapabilities.allowUnsafeLocalFallback) {
-      return '本地模式受控';
-    }
-    return undefined;
-  }, [executorCapabilities, executorMode]);
+  const executorBadgeLabel = useMemo(
+    () => getExecutorHint(executorMode, executorCapabilities),
+    [executorCapabilities, executorMode]
+  );
 
   const withDockerHint = (message: string, code?: string): string => {
-    if (executorMode !== 'docker') {
-      return message;
-    }
-    if (code !== 'DOCKER_UNAVAILABLE' && !/docker/i.test(message)) {
+    if (executorMode !== 'docker' || code !== 'DOCKER_UNAVAILABLE') {
       return message;
     }
     return `${message}。当前选择了 Docker 判题，请先启动 Docker，或切换到本地/自动判题。`;

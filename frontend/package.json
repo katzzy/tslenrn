@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm --workspace @tslenrn/shared run build",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tslenrn/shared": "*",
     "@monaco-editor/react": "^4.7.0",
     "axios": "^1.14.0",
     "react": "^19.2.4",

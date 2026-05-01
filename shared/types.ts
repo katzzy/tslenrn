@@ -43,9 +43,9 @@ export interface ProblemBankStats {
 }
 
 export interface ExecutorCapabilities {
-  defaultMode: ExecutorMode;
   dockerAvailable: boolean;
   allowUnsafeLocalFallback: boolean;
+  supportedModes: ExecutorMode[];
 }
 
 export interface TestCase {

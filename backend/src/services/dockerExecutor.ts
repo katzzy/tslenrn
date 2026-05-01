@@ -4,9 +4,10 @@ import * as path from 'path';
 import { ExecutionFailure } from '../types/execution';
 import type { ExecutionOutput } from '../types/execution';
 import type { ExecutorCapabilities, ExecutorMode } from '../types/executor';
+import { DockerAvailabilityProbe } from './execution/dockerAvailabilityProbe';
 import { executeInDocker } from './execution/dockerRuntime';
 import { executeLocally } from './execution/localRuntime';
-import { runProcess } from './execution/processRunner';
+import { RuntimeModePolicy } from './execution/runtimeModePolicy';
 
 interface ExecutionOptions {
   timeout?: number;
@@ -21,7 +22,8 @@ export class DockerExecutor {
   private readonly imageName: string;
   private readonly defaultExecutorMode: ExecutorMode;
   private readonly allowUnsafeLocalFallback: boolean;
-  private dockerAvailableCache: boolean | null = null;
+  private readonly availabilityProbe: DockerAvailabilityProbe;
+  private readonly runtimeModePolicy: RuntimeModePolicy;
 
   constructor() {
     const configuredTimeout = Number.parseInt(process.env.EXECUTION_TIMEOUT || '5000', 10);
@@ -36,43 +38,11 @@ export class DockerExecutor {
       configuredMode === 'docker' || configuredMode === 'local' ? configuredMode : 'auto';
     this.allowUnsafeLocalFallback =
       (process.env.ALLOW_UNSAFE_LOCAL_EXECUTION ?? 'false').toLowerCase() === 'true';
-  }
-
-  private async isDockerAvailable(): Promise<boolean> {
-    if (this.dockerAvailableCache !== null) {
-      return this.dockerAvailableCache;
-    }
-
-    try {
-      const result = await runProcess('docker', ['version', '--format', '{{.Server.Version}}'], {
-        timeout: 3000,
-        maxOutputLength: 2000,
-      });
-      this.dockerAvailableCache = result.exitCode === 0;
-    } catch {
-      this.dockerAvailableCache = false;
-    }
-
-    return this.dockerAvailableCache;
-  }
-
-  private async resolveRuntimeMode(requestedMode?: ExecutorMode): Promise<'docker' | 'local'> {
-    const selectedMode = requestedMode ?? this.defaultExecutorMode;
-
-    if (selectedMode === 'docker') {
-      if (!(await this.isDockerAvailable())) {
-        throw new ExecutionFailure('Executor mode is docker but Docker is unavailable.', {
-          code: 'DOCKER_UNAVAILABLE',
-        });
-      }
-      return 'docker';
-    }
-
-    if (selectedMode === 'local') {
-      return 'local';
-    }
-
-    return (await this.isDockerAvailable()) ? 'docker' : 'local';
+    this.availabilityProbe = new DockerAvailabilityProbe();
+    this.runtimeModePolicy = new RuntimeModePolicy({
+      defaultExecutorMode: this.defaultExecutorMode,
+      allowUnsafeLocalFallback: this.allowUnsafeLocalFallback,
+    });
   }
 
   async execute(code: string, options: ExecutionOptions = {}): Promise<ExecutionOutput> {
@@ -89,7 +59,11 @@ export class DockerExecutor {
       await fs.writeFile(inputFile, stdin);
 
       const startTime = Date.now();
-      const runtimeMode = await this.resolveRuntimeMode(requestedMode);
+      const dockerAvailable = await this.availabilityProbe.isDockerAvailable();
+      const runtimeMode = this.runtimeModePolicy.resolveMode({
+        requestedMode,
+        dockerAvailable,
+      });
       const result =
         runtimeMode === 'docker'
           ? await executeInDocker({
@@ -105,8 +79,6 @@ export class DockerExecutor {
               tempDir,
               timeout,
               maxOutputLength,
-              allowUnsafeLocalFallback: this.allowUnsafeLocalFallback,
-              forceLocalByRequest: requestedMode === 'local',
             });
 
       return {
@@ -129,14 +101,14 @@ export class DockerExecutor {
 
   async getCapabilities(): Promise<ExecutorCapabilities> {
     return {
-      defaultMode: this.defaultExecutorMode,
-      dockerAvailable: await this.isDockerAvailable(),
+      dockerAvailable: await this.availabilityProbe.isDockerAvailable(),
       allowUnsafeLocalFallback: this.allowUnsafeLocalFallback,
+      supportedModes: ['auto', 'docker', 'local'],
     };
   }
 
   async testDocker(): Promise<boolean> {
-    return this.isDockerAvailable();
+    return this.availabilityProbe.isDockerAvailable();
   }
 }
 

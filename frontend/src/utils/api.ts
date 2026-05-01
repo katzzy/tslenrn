@@ -23,7 +23,7 @@ export const executeCode = async (
   executorMode?: ExecutorMode
 ): Promise<ExecutionResult> => {
   const payload: { code: string; input: string; executorMode?: ExecutorMode } = { code, input };
-  if (executorMode) {
+  if (executorMode !== undefined) {
     payload.executorMode = executorMode;
   }
   const response = await api.post<ExecutionResult>('/execute', payload);
@@ -36,7 +36,7 @@ export const testCode = async (
   executorMode?: ExecutorMode
 ): Promise<TestResult> => {
   const payload: { code: string; problemId: number; executorMode?: ExecutorMode } = { code, problemId };
-  if (executorMode) {
+  if (executorMode !== undefined) {
     payload.executorMode = executorMode;
   }
   const response = await api.post<TestResult>('/test', payload);

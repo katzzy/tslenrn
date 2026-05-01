@@ -17,7 +17,7 @@
 
 - **Frontend**: React 19, TypeScript, Vite, TailwindCSS, Monaco
 - **Backend**: Node.js, Express, TypeScript
-- **Execution**: 默认 Docker 隔离执行（`tslenrn-executor:latest`），无 Docker 时可切换本地执行（不隔离）
+- **Execution**: 前端模式选择为权威；后端按请求模式执行（`auto/docker/local`）
 
 ## 运行要求
 
@@ -54,11 +54,11 @@ MAX_OUTPUT_LENGTH=10000
 
 执行模式说明：
 
-- `EXECUTOR_MODE=auto`：优先 Docker，不可用时回退本地执行
-- `EXECUTOR_MODE=docker`：强制 Docker（不可用时报错）
-- `EXECUTOR_MODE=local`：强制本地执行（无容器隔离）
-- `ALLOW_UNSAFE_LOCAL_EXECUTION=false`（默认）：禁用本地回退（Docker 不可用时直接报错）
-- `ALLOW_UNSAFE_LOCAL_EXECUTION=true`：显式启用本地回退（开发调试可用，但不安全）
+- `executorMode=auto`：优先 Docker；若 Docker 不可用，仅在 `ALLOW_UNSAFE_LOCAL_EXECUTION=true` 时自动回退本地
+- `executorMode=docker`：强制 Docker（不可用时报错）
+- `executorMode=local`：显式本地执行（无容器隔离）
+- `ALLOW_UNSAFE_LOCAL_EXECUTION=false`（默认）：仅禁止 **auto** 模式自动回退，不影响显式 `local`
+- `EXECUTOR_MODE`：仅在请求体未传 `executorMode` 时作为后端默认值（非前端主流程）
 
 ### 3. 构建执行镜像
 
@@ -131,7 +131,7 @@ process.stdout.write(out.join('\n'));
 - `GET /api/problems`：题目列表
 - `GET /api/problems/stats`：题库分布统计（难度/路径/模块）
 - `GET /api/problems/:id`：题目详情（含公开测试信息）
-- `GET /api/executor/capabilities`：执行器能力（默认模式、Docker 可用性、本地回退策略）
+- `GET /api/executor/capabilities`：执行器能力（Docker 可用性、自动回退策略、支持的模式）
 - `POST /api/execute`：运行代码
   - body: `{ code: string, input?: string, executorMode?: 'docker' | 'local' | 'auto' }`
 - `POST /api/test`：判题

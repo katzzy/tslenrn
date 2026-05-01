@@ -1,20 +1,6 @@
 import { problems } from '../problems';
-import type { LearningModule, LearningTrack, Problem } from '../types/problem';
+import type { Problem, ProblemBankStats, ProblemSummary } from '@tslenrn/shared/types';
 import { HttpError } from '../utils/http';
-
-export interface ProblemSummary {
-  id: number;
-  title: string;
-  difficulty: Problem['difficulty'];
-  learning: Problem['learning'];
-}
-
-export interface ProblemBankStats {
-  total: number;
-  difficulty: Record<Problem['difficulty'], number>;
-  track: Record<LearningTrack, number>;
-  module: Record<LearningModule, number>;
-}
 
 export const listProblems = (): ProblemSummary[] =>
   problems.map((problem) => ({
