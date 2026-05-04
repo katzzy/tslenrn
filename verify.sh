@@ -4,94 +4,53 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-echo "🔍 TypeScript Learning Platform - Verification Report"
-echo "======================================================"
+echo "🔍 TypeScript Learning Platform - Verification"
+echo "============================================="
 echo ""
 
-# Project structure
-echo "📁 Project Structure:"
-echo "  ✅ frontend/"
-echo "  ✅ backend/"
-echo "  ✅ shared/"
+echo "📁 Required files:"
+for file in \
+  "README.md" \
+  "package.json" \
+  "frontend/package.json" \
+  "backend/package.json" \
+  "shared/package.json" \
+  "backend/src/index.ts" \
+  "frontend/src/App.tsx" \
+  "shared/types.ts"
+do
+  if [ -f "${file}" ]; then
+    echo "  ✅ ${file}"
+  else
+    echo "  ❌ ${file}"
+  fi
+done
 echo ""
 
-# Backend files
-echo "🔧 Backend Components:"
-if [ -f "backend/src/index.ts" ]; then echo "  ✅ Server entry point"; else echo "  ❌ Missing server"; fi
-if [ -f "backend/src/services/dockerExecutor.ts" ]; then echo "  ✅ Docker executor"; else echo "  ❌ Missing executor"; fi
-if [ -f "backend/src/routes/execute.ts" ]; then echo "  ✅ Execute route"; else echo "  ❌ Missing execute route"; fi
-if [ -f "backend/src/routes/test.ts" ]; then echo "  ✅ Test route"; else echo "  ❌ Missing test route"; fi
-if [ -f "backend/src/problems/index.ts" ]; then echo "  ✅ Problem definitions"; else echo "  ❌ Missing problems"; fi
+echo "🧪 Running project checks:"
+echo "  1) Build (shared + frontend + backend)"
+npm run build
+echo "  ✅ Build passed"
+echo ""
+echo "  2) Frontend lint"
+(cd frontend && npm run lint)
+echo "  ✅ Frontend lint passed"
+echo ""
+echo "  3) Frontend tests"
+(cd frontend && npm test)
+echo "  ✅ Frontend tests passed"
+echo ""
+echo "  4) Backend tests"
+(cd backend && npm test)
+echo "  ✅ Backend tests passed"
 echo ""
 
-# Frontend files
-echo "🎨 Frontend Components:"
-if [ -f "frontend/src/App.tsx" ]; then echo "  ✅ Main App"; else echo "  ❌ Missing App"; fi
-if [ -f "frontend/src/components/CodeEditor.tsx" ]; then echo "  ✅ Code Editor"; else echo "  ❌ Missing editor"; fi
-if [ -f "frontend/src/components/ProblemList.tsx" ]; then echo "  ✅ Problem List"; else echo "  ❌ Missing list"; fi
-if [ -f "frontend/src/components/ResultPanel.tsx" ]; then echo "  ✅ Result Panel"; else echo "  ❌ Missing panel"; fi
-if [ -f "frontend/src/hooks/useProblems.ts" ]; then echo "  ✅ Problem data flow hook"; else echo "  ❌ Missing problem data hook"; fi
-echo ""
-
-# Configuration files
-echo "⚙️  Configuration:"
-if [ -f "backend/package.json" ]; then echo "  ✅ Backend package.json"; else echo "  ❌ Missing backend config"; fi
-if [ -f "frontend/package.json" ]; then echo "  ✅ Frontend package.json"; else echo "  ❌ Missing frontend config"; fi
-if [ -f "backend/tsconfig.json" ]; then echo "  ✅ Backend TypeScript config"; else echo "  ❌ Missing backend tsconfig"; fi
-if [ -f "frontend/tsconfig.json" ]; then echo "  ✅ Frontend TypeScript config"; else echo "  ❌ Missing frontend tsconfig"; fi
-if [ -f "backend/.env" ]; then echo "  ✅ Backend environment"; else echo "  ⚠️  Missing .env (run setup.sh)"; fi
-echo ""
-
-# Documentation
-echo "📚 Documentation:"
-if [ -f "README.md" ]; then echo "  ✅ English README"; else echo "  ❌ Missing README"; fi
-if [ -f "README.zh-CN.md" ]; then echo "  ✅ Chinese README"; else echo "  ❌ Missing Chinese README"; fi
-if [ -f "DEVELOPMENT.md" ]; then echo "  ✅ Development guide"; else echo "  ❌ Missing dev guide"; fi
-if [ -f "PROJECT_SUMMARY.md" ]; then echo "  ✅ Project summary"; else echo "  ❌ Missing summary"; fi
-echo ""
-
-# Scripts
-echo "🔨 Scripts:"
-if [ -f "setup.sh" ] && [ -x "setup.sh" ]; then echo "  ✅ Setup script"; else echo "  ❌ Missing setup script"; fi
-if [ -f "backend/build-docker.sh" ] && [ -x "backend/build-docker.sh" ]; then echo "  ✅ Docker build script"; else echo "  ❌ Missing docker script"; fi
-echo ""
-
-# Check dependencies
-echo "📦 Dependencies:"
-if [ -d "node_modules" ]; then echo "  ✅ Root dependencies installed"; else echo "  ⚠️  Root dependencies missing (run npm install)"; fi
-if [ -d "frontend/node_modules" ]; then echo "  ✅ Frontend dependencies installed"; else echo "  ⚠️  Frontend dependencies missing"; fi
-if [ -d "backend/node_modules" ]; then echo "  ✅ Backend dependencies installed"; else echo "  ⚠️  Backend dependencies missing"; fi
-echo ""
-
-# Runtime checks
-echo "🌐 Runtime Checks:"
+echo "🌐 Runtime health:"
 if curl -s --max-time 2 http://localhost:3000/api/health > /dev/null; then
-  API_STATUS="✅ Reachable (GET /api/health)"
+  echo "  ✅ Backend health reachable (GET /api/health)"
 else
-  API_STATUS="⚠️  Not reachable (start backend to verify endpoints)"
+  echo "  ℹ️  Backend not running (start backend to check health endpoint)"
 fi
-echo "  ${API_STATUS}"
-if [ -f "backend/.env" ]; then
-  EXECUTOR_MODE_VALUE="$(grep -E '^EXECUTOR_MODE=' backend/.env | tail -n 1 | cut -d'=' -f2-)"
-  LOCAL_FALLBACK_VALUE="$(grep -E '^ALLOW_UNSAFE_LOCAL_EXECUTION=' backend/.env | tail -n 1 | cut -d'=' -f2-)"
-  [ -z "${EXECUTOR_MODE_VALUE}" ] && EXECUTOR_MODE_VALUE="auto (default)"
-  [ -z "${LOCAL_FALLBACK_VALUE}" ] && LOCAL_FALLBACK_VALUE="false (default)"
-  echo "  Executor mode: ${EXECUTOR_MODE_VALUE}"
-  echo "  Unsafe local fallback: ${LOCAL_FALLBACK_VALUE}"
-fi
-echo ""
 
-# Summary
-echo "📊 Project Status:"
-echo "  Core features: ✅ Implemented"
-echo "  UI Components: ✅ Complete"
-echo "  API Endpoints: ${API_STATUS}"
-echo "  Documentation: ✅ Comprehensive"
-echo ""
-echo "🎯 Next Steps:"
-echo "  1. Run './setup.sh' if not done yet"
-echo "  2. Start backend: 'cd backend && npm run dev'"
-echo "  3. Start frontend: 'cd frontend && npm run dev'"
-echo "  4. Open http://localhost:5173"
 echo ""
 echo "✅ Verification Complete!"

@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { ExecutionFailure } from '../types/execution';
 import {
   getProblemBankStats,
   getProblemByIdOrThrow,
@@ -6,6 +7,7 @@ import {
   listProblems,
 } from '../services/problemService';
 import { runProblemTests } from '../services/testRunner';
+import { toExecutionHttpError } from '../utils/executionHttp';
 import { asyncHandler } from '../utils/http';
 import {
   validateCode,
@@ -38,9 +40,15 @@ router.post(
     const problemId = validateProblemId(body.problemId);
     const executorMode = validateOptionalExecutorMode(body.executorMode);
     const problem = getProblemByIdOrThrow(problemId);
-    const result = await runProblemTests(code, problem, executorMode);
-
-    res.json(result);
+    try {
+      const result = await runProblemTests(code, problem, executorMode);
+      res.json(result);
+    } catch (error: unknown) {
+      if (error instanceof ExecutionFailure) {
+        throw toExecutionHttpError(error);
+      }
+      throw error;
+    }
   })
 );
 

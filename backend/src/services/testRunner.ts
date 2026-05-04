@@ -19,10 +19,25 @@ const normalizeOutput = (value: string): string =>
     .join('\n')
     .trim();
 
-const parseConcurrency = (): number => {
+const MIN_TEST_CONCURRENCY = 1;
+const MAX_TEST_CONCURRENCY = 8;
+
+export const resolveTestConcurrency = (): number => {
   const configured = Number.parseInt(process.env.TEST_CONCURRENCY ?? '2', 10);
-  return Number.isFinite(configured) && configured > 0 ? configured : 2;
+  if (!Number.isFinite(configured) || configured < MIN_TEST_CONCURRENCY) {
+    return 2;
+  }
+  if (configured > MAX_TEST_CONCURRENCY) {
+    return MAX_TEST_CONCURRENCY;
+  }
+  return configured;
 };
+
+const shouldRethrowExecutionFailure = (error: ExecutionFailure): boolean =>
+  error.code === 'DOCKER_UNAVAILABLE' ||
+  error.code === 'LOCAL_FALLBACK_DISABLED' ||
+  error.code === 'TYPESCRIPT_RUNTIME_MISSING' ||
+  error.code === 'PROCESS_START_FAILED';
 
 const runWithConcurrency = async <T, R>(
   items: readonly T[],
@@ -64,6 +79,9 @@ const runSingleCase = async (
     passed = actual === expected;
   } catch (error: unknown) {
     if (error instanceof ExecutionFailure) {
+      if (shouldRethrowExecutionFailure(error)) {
+        throw error;
+      }
       actual = normalizeOutput(error.output ?? error.message);
     } else {
       throw error;
@@ -80,7 +98,7 @@ const runSingleCase = async (
 };
 
 export const runProblemTests = async (code: string, problem: Problem, executorMode?: ExecutorMode) => {
-  const results = await runWithConcurrency(problem.testCases, parseConcurrency(), (testCase) =>
+  const results = await runWithConcurrency(problem.testCases, resolveTestConcurrency(), (testCase) =>
     runSingleCase(code, testCase, executorMode)
   );
   const passed = results.reduce((count, result) => count + (result.passed ? 1 : 0), 0);

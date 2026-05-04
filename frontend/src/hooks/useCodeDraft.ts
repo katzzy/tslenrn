@@ -1,32 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
+import { readJsonStorage, userStorageKey, writeJsonStorage } from '../utils/storage';
 
-const STORAGE_KEY = 'code-by-problem-v1';
 const SAVE_DELAY_MS = 300;
 const STORAGE_ERROR_MESSAGE = '本地草稿保存不可用，刷新页面后可能丢失当前代码。';
 
-const readCodeMap = (): { codeMap: Record<number, string>; hasError: boolean } => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return {
-      codeMap: raw ? (JSON.parse(raw) as Record<number, string>) : {},
-      hasError: false,
-    };
-  } catch (error) {
-    console.error('Failed to read code drafts from localStorage.', error);
-    return {
-      codeMap: {},
-      hasError: true,
-    };
-  }
-};
+const getStorageKey = (userId: string): string => userStorageKey(userId, 'code-drafts');
+
+const readCodeMap = (userId: string): { codeMap: Record<number, string>; hasError: boolean } => ({
+  codeMap: readJsonStorage<Record<number, string>>(getStorageKey(userId), {}),
+  hasError: false,
+});
 
 interface UseCodeDraftParams {
+  userId: string;
   selectedProblemId: number;
   starterCode?: string;
 }
 
-export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftParams) {
-  const [initialDraftState] = useState(() => readCodeMap());
+export function useCodeDraft({ userId, selectedProblemId, starterCode }: UseCodeDraftParams) {
+  const [initialDraftState] = useState(() => readCodeMap(userId));
   const [savedCodeByProblem, setSavedCodeByProblem] = useState<Record<number, string>>(
     () => initialDraftState.codeMap
   );
@@ -49,11 +41,10 @@ export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftPar
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedCodeByProblem));
+      const success = writeJsonStorage(getStorageKey(userId), savedCodeByProblem);
+      if (success) {
         setStorageError((prev) => (prev ? null : prev));
-      } catch (error) {
-        console.error('Failed to persist code drafts to localStorage.', error);
+      } else {
         setStorageError(STORAGE_ERROR_MESSAGE);
       }
     }, SAVE_DELAY_MS);
@@ -61,7 +52,7 @@ export function useCodeDraft({ selectedProblemId, starterCode }: UseCodeDraftPar
     return () => {
       window.clearTimeout(timer);
     };
-  }, [savedCodeByProblem]);
+  }, [savedCodeByProblem, userId]);
 
   const setCode = (nextCode: string) => {
     if (!selectedProblemId) return;

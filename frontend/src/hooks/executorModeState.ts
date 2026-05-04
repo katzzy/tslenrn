@@ -1,4 +1,5 @@
 import type { ExecutorCapabilities, ExecutorMode } from '../types';
+import { readStringStorage, userStorageKey, writeStringStorage } from '../utils/storage';
 
 const MODE_CYCLE: Record<ExecutorMode, ExecutorMode> = {
   auto: 'docker',
@@ -6,22 +7,20 @@ const MODE_CYCLE: Record<ExecutorMode, ExecutorMode> = {
   local: 'auto',
 };
 
-const STORAGE_KEY = 'tslenrn.executor-mode';
+const getStorageKey = (userId: string): string => userStorageKey(userId, 'executor-mode');
 
 export const getNextExecutorMode = (current: ExecutorMode): ExecutorMode => MODE_CYCLE[current];
 
-export const readExecutorModePreference = (): ExecutorMode => {
-  if (typeof window === 'undefined') return 'auto';
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+export const readExecutorModePreference = (userId: string): ExecutorMode => {
+  const raw = readStringStorage(getStorageKey(userId));
   if (raw === 'auto' || raw === 'docker' || raw === 'local') {
     return raw;
   }
   return 'auto';
 };
 
-export const persistExecutorModePreference = (mode: ExecutorMode): void => {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(STORAGE_KEY, mode);
+export const persistExecutorModePreference = (userId: string, mode: ExecutorMode): void => {
+  writeStringStorage(getStorageKey(userId), mode);
 };
 
 export const getExecutorHint = (

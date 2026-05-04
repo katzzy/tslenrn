@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
+import UserSelectionScreen from './components/UserSelectionScreen';
 import DesktopNavBar from './components/workspace/DesktopNavBar';
 import DesktopWorkspace from './components/workspace/DesktopWorkspace';
 import MobileHeader from './components/workspace/MobileHeader';
@@ -7,11 +8,24 @@ import { useProblems } from './hooks/useProblems';
 import { useCodeDraft } from './hooks/useCodeDraft';
 import { useRunner } from './hooks/useRunner';
 import { useSplitPane } from './hooks/useSplitPane';
-import { useThemeMode } from './hooks/useThemeMode';
+import { useThemeMode, type ThemeMode } from './hooks/useThemeMode';
+import { useUserProfiles } from './hooks/useUserProfiles';
 import { useWorkspaceUIState } from './hooks/useWorkspaceUIState';
+import {
+  appScreenReducer,
+  initialAppScreenState,
+} from './state/appScreenState';
+import type { UserProfile } from './state/userProfilesState';
 
-function App() {
-  const { themeMode, toggleTheme } = useThemeMode();
+interface WorkspaceProps {
+  user: UserProfile;
+  onSwitchUser: () => void;
+  themeMode: ThemeMode;
+  onToggleTheme: () => void;
+}
+
+function Workspace({ user, onSwitchUser, themeMode, onToggleTheme }: WorkspaceProps) {
+  const [isSwitchUserConfirmOpen, setIsSwitchUserConfirmOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === 'undefined') return true;
     return window.matchMedia('(min-width: 1024px)').matches;
@@ -26,8 +40,9 @@ function App() {
     isBootstrapping,
     listError,
     selectedProblemError,
-  } = useProblems();
+  } = useProblems(user.id);
   const { code, setCode, resetToStarterCode, storageError } = useCodeDraft({
+    userId: user.id,
     selectedProblemId,
     starterCode: selectedProblem?.starterCode,
   });
@@ -45,7 +60,7 @@ function App() {
     runCode,
     runTests,
     resetForProblemChange,
-  } = useRunner();
+  } = useRunner(user.id);
 
   const handleSelectProblem = (id: number) => {
     setSelectedProblemId(id);
@@ -130,12 +145,14 @@ function App() {
             selectedProblemId={selectedProblemId}
             selectedProblem={selectedProblem}
             themeMode={themeMode}
-            onToggleTheme={toggleTheme}
+            onToggleTheme={onToggleTheme}
+            currentUserName={user.name}
+            onSwitchUser={() => setIsSwitchUserConfirmOpen(true)}
           />
         ) : (
           <MobileHeader
             themeMode={themeMode}
-            onToggleTheme={toggleTheme}
+            onToggleTheme={onToggleTheme}
             selectedProblemId={selectedProblemId}
             problems={problems}
             onSelectProblem={handleSelectProblem}
@@ -158,6 +175,8 @@ function App() {
             isResetConfirmOpen={ui.isResetConfirmOpen && Boolean(selectedProblem)}
             onConfirmReset={() => ui.confirmReset(resetToStarterCode)}
             onCancelReset={ui.cancelResetConfirm}
+            currentUserName={user.name}
+            onSwitchUser={() => setIsSwitchUserConfirmOpen(true)}
           />
         )}
 
@@ -221,7 +240,68 @@ function App() {
           />
         )}
       </div>
+      {isSwitchUserConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-4 backdrop-blur-sm">
+          <div className="ios-panel w-full max-w-sm p-4">
+            <p className="text-sm text-gray-700 dark:text-gray-200">
+              切换用户将返回用户选择页，是否继续？
+            </p>
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSwitchUserConfirmOpen(false)}
+                className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSwitchUserConfirmOpen(false);
+                  onSwitchUser();
+                }}
+                className="rounded-full bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+              >
+                切换用户
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function App() {
+  const { themeMode, toggleTheme } = useThemeMode();
+  const { users, activeUser, activeUserId, selectUser, createUser, renameUser, deleteUser } =
+    useUserProfiles();
+  const [appScreen, dispatchAppScreen] = useReducer(appScreenReducer, initialAppScreenState);
+
+  if (appScreen.view !== 'workspace' || !activeUser) {
+    return (
+      <UserSelectionScreen
+        themeMode={themeMode}
+        onToggleTheme={toggleTheme}
+        users={users}
+        selectedUserId={activeUserId}
+        onSelectUser={selectUser}
+        onCreateUser={createUser}
+        onRenameUser={renameUser}
+        onDeleteUser={deleteUser}
+        onEnterWorkspace={() => dispatchAppScreen({ type: 'ENTER_WORKSPACE' })}
+      />
+    );
+  }
+
+  return (
+    <Workspace
+      key={activeUser.id}
+      user={activeUser}
+      onSwitchUser={() => dispatchAppScreen({ type: 'OPEN_USER_SELECT' })}
+      themeMode={themeMode}
+      onToggleTheme={toggleTheme}
+    />
   );
 }
 

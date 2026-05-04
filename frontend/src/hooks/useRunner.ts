@@ -8,20 +8,35 @@ import {
   persistExecutorModePreference,
   readExecutorModePreference,
 } from './executorModeState';
+import {
+  readStringStorage,
+  userStorageKey,
+  writeStringStorage,
+} from '../utils/storage';
 
-export function useRunner() {
+const getRunnerInputStorageKey = (userId: string): string => userStorageKey(userId, 'runner-input');
+const getRunnerTabStorageKey = (userId: string): string => userStorageKey(userId, 'runner-tab');
+
+const readRunnerTabPreference = (userId: string): 'output' | 'tests' => {
+  const raw = readStringStorage(getRunnerTabStorageKey(userId));
+  return raw === 'tests' ? 'tests' : 'output';
+};
+
+export function useRunner(userId: string) {
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [customInput, setCustomInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'output' | 'tests'>('output');
-  const [executorMode, setExecutorMode] = useState<ExecutorMode>(() => readExecutorModePreference());
+  const [customInput, setCustomInput] = useState(() => readStringStorage(getRunnerInputStorageKey(userId)) ?? '');
+  const [activeTab, setActiveTab] = useState<'output' | 'tests'>(() => readRunnerTabPreference(userId));
+  const [executorMode, setExecutorMode] = useState<ExecutorMode>(() =>
+    readExecutorModePreference(userId)
+  );
   const [executorCapabilities, setExecutorCapabilities] = useState<ExecutorCapabilities | null>(null);
 
   const toggleExecutorMode = () => {
     setExecutorMode((prev) => {
       const next = getNextExecutorMode(prev);
-      persistExecutorModePreference(next);
+      persistExecutorModePreference(userId, next);
       return next;
     });
   };
@@ -43,6 +58,14 @@ export function useRunner() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    writeStringStorage(getRunnerInputStorageKey(userId), customInput);
+  }, [customInput, userId]);
+
+  useEffect(() => {
+    writeStringStorage(getRunnerTabStorageKey(userId), activeTab);
+  }, [activeTab, userId]);
 
   const getExecutorModeForRequest = (): ExecutorMode => executorMode;
 

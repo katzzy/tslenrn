@@ -5,6 +5,9 @@ export type ThemeMode = 'light' | 'dark';
 const STORAGE_KEY = 'theme-mode-v1';
 
 const readThemeMode = (): ThemeMode => {
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
   const storedTheme = window.localStorage.getItem(STORAGE_KEY);
   return storedTheme === 'dark' ? 'dark' : 'light';
 };
@@ -16,7 +19,9 @@ export function useThemeMode() {
     const isDark = themeMode === 'dark';
     document.documentElement.classList.toggle('dark', isDark);
     document.body.classList.toggle('dark', isDark);
-    window.localStorage.setItem(STORAGE_KEY, themeMode);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(STORAGE_KEY, themeMode);
+    }
   }, [themeMode]);
 
   const toggleTheme = () => {

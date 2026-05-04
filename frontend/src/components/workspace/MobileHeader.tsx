@@ -30,6 +30,8 @@ interface MobileHeaderProps {
   isResetConfirmOpen: boolean;
   onConfirmReset: () => void;
   onCancelReset: () => void;
+  currentUserName: string;
+  onSwitchUser: () => void;
 }
 
 const MobileHeader = ({
@@ -57,6 +59,8 @@ const MobileHeader = ({
   isResetConfirmOpen,
   onConfirmReset,
   onCancelReset,
+  currentUserName,
+  onSwitchUser,
 }: MobileHeaderProps) => (
   <header className="sticky top-0 z-20 border-b border-white/80 bg-white/75 px-6 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70 lg:hidden">
     <div className="mb-3 flex items-center justify-end">
@@ -74,11 +78,19 @@ const MobileHeader = ({
           <span>编写代码，运行测试，掌握 TypeScript</span>
           <span className="ios-chip">ACM 模式</span>
           <span className="ios-chip">题号 #{selectedProblemId}</span>
+          <span className="ios-chip">用户：{currentUserName}</span>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <RunActions onRun={onRun} onTest={onTest} isLoading={isLoading} />
+        <button
+          type="button"
+          onClick={onSwitchUser}
+          className="rounded-full border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+        >
+          切换用户
+        </button>
         <div className="relative">
           <button
             onClick={onToggleMoreMenu}

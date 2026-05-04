@@ -8,6 +8,10 @@
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./dist/empty.js"
+    },
+    "./userProfiles": {
+      "types": "./dist/userProfiles.d.ts",
+      "default": "./dist/userProfiles.js"
     }
   },
   "scripts": {
